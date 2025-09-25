@@ -1,7 +1,7 @@
 # Makefile for CELib.
 .SUFFIX: .c .o
 
-CC = gcc 
+CC = clang
 
 CFLAGS = -std=c99 -O3 -g -Wall -ffast-math  #-fPIC
 

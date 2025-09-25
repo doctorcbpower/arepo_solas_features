@@ -58,6 +58,10 @@
 herr_t my_hdf5_error_handler(void *unused);
 #endif
 
+#include <time.h>
+
+#include "CELib.h"
+
 static void delete_end_file(void);
 
 /*! \brief Prints a welcome message.
@@ -231,6 +235,7 @@ void begrun2(void)
       CELibShowVersion();
   
     CELibInit();
+    
     srand((unsigned int)time(NULL));
   
     if(ThisTask == 0)

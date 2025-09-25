@@ -23,7 +23,7 @@ def parseIf(string, defines, fin):
             continue
         
         if s.startswith("/*"):
-            m = re.search("\*/",s)
+            m = re.search("\\*/",s)
             if m is not None:
                 s = s[m.span()[1]:]
                 continue
@@ -102,7 +102,7 @@ def filter_code_params():
     with open('src/parameters.c','r') as fin:
         s = fin.read()
 
-    d = re.findall(r'strcpy\(tag\[nt\],\s?"[a-zA-Z_0-9]+"\);',s)
+    d = re.findall(r'strcpy\\(tag\[nt\],\\s?"[a-zA-Z_0-9]+"\);',s)
 
     params = [dd.split('"')[1] for dd in d]
 
@@ -138,11 +138,11 @@ def filter_makefile(fin):
     for line in fin:
         s = line.strip()
         if s.startswith("ifeq"):
-            d = re.findall("ifeq\s*\(([a-zA-Z_][a-zA-Z_0-9]*)\s*,\s*\$\(findstring",s)
+            d = re.findall("ifeq\\s*\\(([a-zA-Z_][a-zA-Z_0-9]*)\\s*,\\s*\\$\\(findstring",s)
             for dd in d:
                 defines.update([dd])
         if s.startswith("ifneq"):
-            d = re.findall("ifneq\s*\(([a-zA-Z_][a-zA-Z_0-9]*)\s*,\s*\$\(findstring",s)
+            d = re.findall("ifneq\\s*\\(([a-zA-Z_][a-zA-Z_0-9]*)\\s*,\\s*\\$\\(findstring",s)
             for dd in d:
                 defines.update([dd])
     
@@ -189,7 +189,7 @@ def filter_params_documentation():
         with open(filename,'r') as fin:
             s = fin.read()
 
-        d = re.findall(r"\n\* ``[a-zA-Z_0-9]+``",s)
+        d = re.findall(r"\n\\* ``[a-zA-Z_0-9]+``",s)
         defines.update( [dd.strip()[4:-2] for dd in d] )
 
     return defines
