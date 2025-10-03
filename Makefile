@@ -56,7 +56,7 @@ endif
 # end of Darwin
 
 #Mac OS using MacPorts modules for openmpi, fftw, gsl, hdf5 and hwloc
-ifeq ($(SYSTYPE),"MacBookPro")
+ifeq ($(SYSTYPE),"MACOSX")
 # compiler and its optimization options
 CC        =  mpicc   # sets the C-compiler
 OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function

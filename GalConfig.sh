@@ -5,6 +5,8 @@
 #  examples/galaxy_merger_star_formation_3d/Config.sh   #
 #########################################################
 
+#ADDBACKGROUNDGRID=16          # Re-grid hydrodynamics quantities on a Oct-tree AMR grid. This does not perform a simulation.
+
 #--------------------------------------- Mesh motion and regularization
 REGULARIZE_MESH_CM_DRIFT                # Mesh regularization; Move mesh generating point towards center of mass to make cells rounder.
 REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED # Limit mesh regularization speed by local sound speed

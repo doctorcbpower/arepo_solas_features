@@ -60,7 +60,9 @@ herr_t my_hdf5_error_handler(void *unused);
 
 #include <time.h>
 
+#ifdef STARS 
 #include "CELib.h"
+#endif
 
 static void delete_end_file(void);
 
