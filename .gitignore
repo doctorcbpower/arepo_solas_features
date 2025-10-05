@@ -37,3 +37,7 @@ uses-machines.txt
 **/*.out
 **/*.a
 **/*.o
+
+#Python notebook stuff
+**/*ipynb
+.ipynb*

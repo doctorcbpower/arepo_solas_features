@@ -10,8 +10,15 @@
 #STAR_BY_STAR
 #WINDS
 #SUPERNOVAE
-#OUTPUT_TIMEBIN_STAR
+#USE_CELIB              # Use the CELib libraries
 
+#--------------------------------------- Star Formation parameters
+#EEOS_SF               # Default SF scheme in Arepo
+#AGORA_SF               # Agora based SF
+#JEANS_SF               # Jeans length based SF
+#JEANS_MASS_BASED       # Jeans mass based SF
+
+#--------------------------------------- Black Hole parameters
 #BLACKHOLES
 #BURST_MODE
 #BONDI_ACCRETION
@@ -26,14 +33,17 @@
 #BH_JET_REFINEMENT
 #OUTPUT_REFBHCOUNTER
 
-#AGORA_SF
-#JEANS_SF #Jeans length based SF
-#JEANS_MASS_BASED #Jeans mass based SF
+#OUTPUT_TIMEBIN_STAR
+#OUTPUTTIMESTEP_BH
 
+#--------------------------------------- Cooling parameters
 #USE_GRACKLE
 #GRACKLE_CHEMISTRY=0 # Curretly only grackle mode=0 (lookup tables) with no chemistry network is supported
 
+#--------------------------------------- Metal parameters
 #METALS # Advect all metals, ie metal mass fraction, as a PASSIVE_SCALARS.
+
+#WENDLAND_C2_KERNEL
 
 #--------------------------------------- Basic operation mode of code; default: 3d with 6 particle types; type 0: gas >0: only gravitationally interacting
 #NTYPES=6                      # number of particle types

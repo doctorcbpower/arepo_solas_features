@@ -15,7 +15,7 @@ REGULARIZE_MESH_FACE_ANGLE               # Use maximum face angle as roundness c
 
 
 #--------------------------------------- Gravity softening
-NSOFTTYPES=2                             # Number of different softening values to which particle types can be mapped.
+NSOFTTYPES=4                            # Number of different softening values to which particle types can be mapped.
 
 
 #--------------------------------------- output options

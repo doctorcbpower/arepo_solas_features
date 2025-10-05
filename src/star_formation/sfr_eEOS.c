@@ -47,7 +47,7 @@
 
 #include "../gravity/forcetree.h"
 
-#if defined(USE_SFR) && !defined(AGORA_SF) && !defined(JEANS_SF)
+#if defined(USE_SFR) && defined(EEOS_SF) 
 
 /*! \brief Main driver for star formation and gas cooling.
  *

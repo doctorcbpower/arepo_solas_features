@@ -79,7 +79,7 @@ int init(void)
 /* IonizeParams initalises the Treecool file and such, 
 * which we don't need when using grackle
 */
-#if defined(COOLING) // TODO: && !defined(USE_GRACKLE)
+#if defined(COOLING) && !defined(USE_GRACKLE)
     IonizeParams();
 #endif /* defined(COOLING) && !defined(USE_GRACKLE) */
 
@@ -371,7 +371,7 @@ int init(void)
     {
       mark_active_timebins();
       open_logfiles();
-#if defined(USE_SFR)
+#if defined(USE_SFR) && defined(EEOS_SF)
       sfr_init();
 #endif /* #if defined(USE_SFR) */
       set_non_standard_physics_for_current_time();
@@ -452,60 +452,60 @@ int init(void)
       SphP[i].Momentum[1] = P[i].Mass * P[i].Vel[1];
       SphP[i].Momentum[2] = P[i].Mass * P[i].Vel[2];
 
-#ifdef MHD
-#ifdef MHD_SEEDFIELD
-      if(RestartFlag == 0)
-        {
-          if(i == 0)
-            {
-              mpi_printf("MHD Seed field=%g, direction=%d\n", All.B_value, All.B_dir);
-            }
-
-          int k;
-          double bfac = 1. / (sqrt(All.UnitMass_in_g / All.UnitLength_in_cm) / (All.UnitTime_in_s / All.HubbleParam));
-
-          double B_value = All.B_value;
-
-          for(k = 0; k < 3; k++)
-            if(All.B_dir & (1 << k))
-              {
-                SphP[i].BConserved[k] = B_value * SphP[i].Volume * bfac;
-                SphP[i].B[k]          = SphP[i].BConserved[k] / SphP[i].Volume;
-              }
-            else
-              {
-                SphP[i].BConserved[k] = 0;
-                SphP[i].B[k]          = SphP[i].BConserved[k] / SphP[i].Volume;
-              }
-
-          if(i == 0)
-            {
-              mpi_printf("BConserved[0] = %g|%g|%g\n", SphP[i].BConserved[0], SphP[i].BConserved[1], SphP[i].BConserved[2]);
-              mpi_printf("Volume[0] %g bfac %g\n", SphP[i].Volume, bfac);
-            }
-          /* convert Gauss-cgs to heavyside - lorentz */
-          {
-            int kk;
-            for(kk = 0; kk < 3; kk++)
-              {
-                SphP[i].BConserved[kk] /= sqrt(4. * M_PI);
-                SphP[i].B[kk] /= sqrt(4. * M_PI);
-              }
-          }
-        }
-      else
-        {
-          SphP[i].BConserved[0] = SphP[i].B[0] * SphP[i].Volume;
-          SphP[i].BConserved[1] = SphP[i].B[1] * SphP[i].Volume;
-          SphP[i].BConserved[2] = SphP[i].B[2] * SphP[i].Volume;
-        }
-#else /* #ifdef MHD_SEEDFIELD */
-      SphP[i].BConserved[0] = SphP[i].B[0] * SphP[i].Volume;
-      SphP[i].BConserved[1] = SphP[i].B[1] * SphP[i].Volume;
-      SphP[i].BConserved[2] = SphP[i].B[2] * SphP[i].Volume;
-
-#endif /* #ifdef MHD_SEEDFIELD #else */
-#endif /* #ifdef MHD */
+//#ifdef MHD
+//#ifdef MHD_SEEDFIELD
+//      if(RestartFlag == 0)
+//        {
+//          if(i == 0)
+//            {
+//              mpi_printf("MHD Seed field=%g, direction=%d\n", All.B_value, All.B_dir);
+//            }
+//
+//          int k;
+//          double bfac = 1. / (sqrt(All.UnitMass_in_g / All.UnitLength_in_cm) / (All.UnitTime_in_s / All.HubbleParam));
+//
+//          double B_value = All.B_value;
+//
+//          for(k = 0; k < 3; k++)
+//            if(All.B_dir & (1 << k))
+//              {
+//                SphP[i].BConserved[k] = B_value * SphP[i].Volume * bfac;
+//                SphP[i].B[k]          = SphP[i].BConserved[k] / SphP[i].Volume;
+//              }
+//            else
+//              {
+//                SphP[i].BConserved[k] = 0;
+//                SphP[i].B[k]          = SphP[i].BConserved[k] / SphP[i].Volume;
+//              }
+//
+//          if(i == 0)
+//            {
+//              mpi_printf("BConserved[0] = %g|%g|%g\n", SphP[i].BConserved[0], SphP[i].BConserved[1], SphP[i].BConserved[2]);
+//              mpi_printf("Volume[0] %g bfac %g\n", SphP[i].Volume, bfac);
+//            }
+//          /* convert Gauss-cgs to heavyside - lorentz */
+//          {
+//            int kk;
+//            for(kk = 0; kk < 3; kk++)
+//              {
+//                SphP[i].BConserved[kk] /= sqrt(4. * M_PI);
+//                SphP[i].B[kk] /= sqrt(4. * M_PI);
+//              }
+//          }
+//        }
+//      else
+//        {
+//          SphP[i].BConserved[0] = SphP[i].B[0] * SphP[i].Volume;
+//          SphP[i].BConserved[1] = SphP[i].B[1] * SphP[i].Volume;
+//          SphP[i].BConserved[2] = SphP[i].B[2] * SphP[i].Volume;
+//        }
+//#else /* #ifdef MHD_SEEDFIELD */
+//      SphP[i].BConserved[0] = SphP[i].B[0] * SphP[i].Volume;
+//      SphP[i].BConserved[1] = SphP[i].B[1] * SphP[i].Volume;
+//      SphP[i].BConserved[2] = SphP[i].B[2] * SphP[i].Volume;
+//
+//#endif /* #ifdef MHD_SEEDFIELD #else */
+//#endif /* #ifdef MHD */
 
         /* utherm has been loaded from IC file */
 #ifdef MESHRELAX
@@ -563,7 +563,7 @@ int init(void)
 #endif /* #ifdef TREE_BASED_TIMESTEPS */
 
   /* initialize star formation rate */
-#if defined(USE_SFR)
+#if defined(USE_SFR) && defined(EEOS_SF)
   sfr_init();
 #endif /* #if defined(USE_SFR) */
 

@@ -56,10 +56,11 @@ static int stars_spawned;           /*!< local number of star particles spawned 
 static int tot_stars_spawned;       /*!< global number of star paricles spawned in the time step */
 static int stars_converted;         /*!< local number of gas cells converted into stars in the time step */
 static int tot_stars_converted;     /*!< global number of gas cells converted into stars in the time step */
-static int altogether_spawned;      /*!< local number of star+wind particles spawned in the time step */
-static int tot_altogether_spawned;  /*!< global number of star+wind particles spawned in the time step */
+static int altogether_spawned;      /*!< local number of particles spawned in the time step */
+static int tot_altogether_spawned;  /*!< global number of particles spawned in the time step */
 static double cum_mass_stars = 0.0; /*!< cumulative mass of stars created in the time step (global value) */
 
+#ifdef EEOS_SF
 static int sfr_init_called = 0;
 
 /*! \brief Initialization routine.
@@ -73,10 +74,9 @@ void sfr_init()
 
   sfr_init_called = 1;
 
-#if !defined(AGORA_SF) && !defined(JEANS_SF)
   init_clouds();
-#endif
 }
+#endif
 
 /*! \brief This routine creates star particles according to their
  *         respective rates.
@@ -329,12 +329,12 @@ void convert_cell_into_star(int i, double birthtime)
   /* set SN properties */
   SP[NumStars].Birthtime = birthtime;
   SP[NumStars].SNIIFlag = 0;
-
 #ifdef METALS 
   SP[NumStars].Metals = SphP[i].Metals;
 #endif  
 
-    struct CELibStructNextEventTimeInput Input = 
+#ifdef USE_CELIB
+  struct CELibStructNextEventTimeInput Input =
     {
       .R = (double)rand()/(double)RAND_MAX,
       .InitialMass_in_Msun = (P[i].Mass * All.UnitMass_in_g / SOLAR_MASS),
@@ -343,8 +343,10 @@ void convert_cell_into_star(int i, double birthtime)
 
   SP[NumStars].SNIITime = birthtime + CELibGetNextEventTime(Input, CELibFeedbackType_SNII) 
     / (1.e6) / All.UnitTime_in_Megayears;
-
-  //timebin_add_particle(&TimeBinsStar, NumStars, -1, 0, 1);  
+#else
+  SP[NumStars].SNIITime = birthtime + All.FeedbackTime/(1.e6)/All.UnitTime_in_Megayears;
+#endif
+  //timebin_add_particle(&TimeBinsStar, NumStars, -1, 0, 1);
  
   NumStars++;
 #endif /* STARS */
@@ -394,11 +396,11 @@ void spawn_star_from_cell(int igas, double birthtime, int istar, MyDouble mass_o
   /* now change the conserved quantities in the cell in proportion */
   double fac = (P[igas].Mass - P[istar].Mass) / P[igas].Mass;
 
-#ifdef MHD
-  double Emag = 0.5 * (SphP[igas].B[0] * SphP[igas].B[0] + SphP[igas].B[1] * SphP[igas].B[1] + SphP[igas].B[2] * SphP[igas].B[2]) *
-                SphP[igas].Volume * All.cf_atime;
-  SphP[igas].Energy -= Emag;
-#endif /* #ifdef MHD */
+//#ifdef MHD
+//  double Emag = 0.5 * (SphP[igas].B[0] * SphP[igas].B[0] + SphP[igas].B[1] * SphP[igas].B[1] + SphP[igas].B[2] * SphP[igas].B[2]) *
+//                SphP[igas].Volume * All.cf_atime;
+//  SphP[igas].Energy -= Emag;
+//#endif /* #ifdef MHD */
 
   P[igas].Mass *= fac;
   SphP[igas].Energy *= fac;
@@ -410,9 +412,9 @@ void spawn_star_from_cell(int igas, double birthtime, int istar, MyDouble mass_o
   SphP[igas].Metals *= fac;
 #endif /* ifdef Metals */
 
-#ifdef MHD
-  SphP[igas].Energy += Emag;
-#endif /* #ifdef MHD */
+//#ifdef MHD
+//  SphP[igas].Energy += Emag;
+//#endif /* #ifdef MHD */
 
 #ifdef MAXSCALARS
   for(int s = 0; s < N_Scalar; s++) /* Note, the changes in MATERIALS, HIGHRESGASMASS, etc., are treated as part of the Scalars */
@@ -435,7 +437,8 @@ void spawn_star_from_cell(int igas, double birthtime, int istar, MyDouble mass_o
   SP[NumStars].Metals = SphP[igas].Metals * (1 - fac);
 #endif
 
-    struct CELibStructNextEventTimeInput Input = 
+#ifdef USE_CELIB
+  struct CELibStructNextEventTimeInput Input =
     {
       .R = (double)rand()/(double)RAND_MAX,
       .InitialMass_in_Msun = (P[istar].Mass * All.UnitMass_in_g / SOLAR_MASS),
@@ -444,8 +447,10 @@ void spawn_star_from_cell(int igas, double birthtime, int istar, MyDouble mass_o
 
   SP[NumStars].SNIITime = birthtime + CELibGetNextEventTime(Input, CELibFeedbackType_SNII) 
     / (1.e6) / All.UnitTime_in_Megayears;  
-
-  //timebin_add_particle(&TimeBinsStar, NumStars, -1, 0, 1); 
+#else
+  SP[NumStars].SNIITime = birthtime + All.FeedbackTime/(1.e6)/All.UnitTime_in_Megayears;
+#endif
+  //timebin_add_particle(&TimeBinsStar, NumStars, -1, 0, 1);
 
   NumStars++;
 #endif

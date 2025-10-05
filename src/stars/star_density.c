@@ -189,6 +189,7 @@ void star_density(void)
     {
       Left[i] = Right[i] = 0;
       SP[i].DensityFlag = 1;
+      StarNumNgb[i] = 0;
 
       if(SP[i].Hsml == 0)
         SP[i].Hsml = cbrt((3.0*All.MeanVolume)/(4.0*M_PI));
@@ -271,7 +272,9 @@ void star_density(void)
                        timediff(t0, t1));
 
           if(iter > MAXITER)
-            terminate("failed to converge in neighbour iteration in star_density()\n");
+          {
+              terminate("failed to converge in neighbour iteration in star_density()\n");
+          }
         }
     }
   while(ntot > 0);

@@ -402,12 +402,6 @@ void read_parameter_file(char *fname)
       id[nt++] = REAL;
 #endif /* #ifndef VORONOI_STATIC_MESH */
 
-#if defined(COOLING)
-      strcpy(tag[nt], "TreecoolFile");
-      addr[nt] = &All.TreecoolFile;
-      id[nt++] = STRING;
-#endif /* #if defined(COOLING) */
-
 #if defined(REFINEMENT)
       strcpy(tag[nt], "ReferenceGasPartMass");
       addr[nt] = &All.ReferenceGasPartMass;
@@ -425,84 +419,6 @@ void read_parameter_file(char *fname)
       addr[nt] = &All.DerefinementCriterion;
       id[nt++] = INT;
 #endif /* #if defined(REFINEMENT) */
-
-#ifdef USE_SFR
-      strcpy(tag[nt], "CritOverDensity");
-      addr[nt] = &All.CritOverDensity;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "TemperatureThresh");
-      addr[nt] = &All.TemperatureThresh;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "CritPhysDensity");
-      addr[nt] = &All.CritPhysDensity;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "FactorSN");
-      addr[nt] = &All.FactorSN;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "FactorEVP");
-      addr[nt] = &All.FactorEVP;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "TempSupernova");
-      addr[nt] = &All.TempSupernova;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "TempClouds");
-      addr[nt] = &All.TempClouds;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "MaxSfrTimescale");
-      addr[nt] = &All.MaxSfrTimescale;
-      id[nt++] = REAL;
-#endif /* #ifdef USE_SFR */
-
-#if defined(USE_SFR) && defined(AGORA_SF)
-      strcpy(tag[nt], "StarFormationEfficiency");  // Value between 0 and 1
-      addr[nt] = &All.StarFormationEfficiency;
-      id[nt++] = REAL;
-
-      strcpy(tag[nt], "StarFormationNumberDensityThreshold"); // n_H in units of cm^-3
-      addr[nt] = &All.StarFormationNumberDensityThreshold;
-      id[nt++] = REAL;
-#endif
-
-#if defined(USE_SFR) && defined(JEANS_SF)
-      strcpy(tag[nt], "StarFormationEfficiency");  // Value between 0 and 1
-      addr[nt] = &All.StarFormationEfficiency;
-      id[nt++] = REAL;
-
-#ifdef JEANS_MASS_BASED
-      strcpy(tag[nt], "JeansMassThreshold");
-      addr[nt] = &All.JeansMassThreshold;
-      id[nt++] = REAL;
-#endif // JEANS_MASS_BASED
-#endif // defined(USE_SFR) && defined(JEANS_SF)
-
-#ifdef USE_GRACKLE
-      strcpy(tag[nt], "GrackleDataFile");
-      addr[nt] = &All.GrackleDataFile;
-      id[nt++] = STRING;
-#endif
-
-#ifdef METALS
-      strcpy(tag[nt], "InitMetallicityinSolar");
-      addr[nt] = &All.InitMetallicityinSolar;
-      id[nt++] = REAL;
-#endif
-
-#ifdef MHD_SEEDFIELD
-      strcpy(tag[nt], "MHDSeedDir");
-      addr[nt] = &All.B_dir;
-      id[nt++] = INT;
-
-      strcpy(tag[nt], "MHDSeedValue");
-      addr[nt] = &All.B_value;
-      id[nt++] = REAL;
-#endif /* #ifdef MHD_SEEDFIELD */
 
 #ifdef REFINEMENT_VOLUME_LIMIT
       strcpy(tag[nt], "MaxVolumeDiff");
@@ -540,6 +456,85 @@ void read_parameter_file(char *fname)
       id[nt++] = REAL;
 #endif /* #ifdef ONEDIMS_SPHERICAL */
 
+/* Cooling */
+#if defined(COOLING)
+#ifndef USE_GRACKLE
+        strcpy(tag[nt], "TreecoolFile");
+        addr[nt] = &All.TreecoolFile;
+        id[nt++] = STRING;
+#else
+        strcpy(tag[nt], "GrackleDataFile");
+        addr[nt] = &All.GrackleDataFile;
+        id[nt++] = STRING;
+#endif
+#endif /* #if defined(COOLING) */
+        
+/* Star Formation */
+#ifdef USE_SFR
+        strcpy(tag[nt], "CritOverDensity");
+        addr[nt] = &All.CritOverDensity;
+        id[nt++] = REAL;
+        
+        strcpy(tag[nt], "CritPhysDensity");
+        addr[nt] = &All.CritPhysDensity;
+        id[nt++] = REAL;
+        
+#ifdef EEOS_SF
+        strcpy(tag[nt], "TemperatureThresh");
+        addr[nt] = &All.TemperatureThresh;
+        id[nt++] = REAL;
+        
+        strcpy(tag[nt], "CritPhysDensity");
+        addr[nt] = &All.CritPhysDensity;
+        id[nt++] = REAL;
+        
+        strcpy(tag[nt], "FactorSN");
+        addr[nt] = &All.FactorSN;
+        id[nt++] = REAL;
+        
+        strcpy(tag[nt], "FactorEVP");
+        addr[nt] = &All.FactorEVP;
+        id[nt++] = REAL;
+        
+        strcpy(tag[nt], "TempSupernova");
+        addr[nt] = &All.TempSupernova;
+        id[nt++] = REAL;
+        
+        strcpy(tag[nt], "TempClouds");
+        addr[nt] = &All.TempClouds;
+        id[nt++] = REAL;
+        
+        strcpy(tag[nt], "MaxSfrTimescale");
+        addr[nt] = &All.MaxSfrTimescale;
+        id[nt++] = REAL;
+#endif /* #ifdef EEOS_SF */
+        
+#ifdef AGORA_SF
+        strcpy(tag[nt], "StarFormationNumberDensityThreshold"); // n_H in units of cm^-3
+        addr[nt] = &All.StarFormationNumberDensityThreshold;
+        id[nt++] = REAL;
+#endif
+        
+#if defined(AGORA_SF) || defined(JEANS_SF)
+        strcpy(tag[nt], "StarFormationEfficiency");  // Value between 0 and 1
+        addr[nt] = &All.StarFormationEfficiency;
+        id[nt++] = REAL;
+#endif
+        
+#ifdef JEANS_MASS_BASED
+        strcpy(tag[nt], "JeansMassThreshold");
+        addr[nt] = &All.JeansMassThreshold;
+        id[nt++] = REAL;
+#endif // JEANS_MASS_BASED
+        
+#endif // defined(USE_SFR)
+        
+/* Metallicity */
+#ifdef METALS
+        strcpy(tag[nt], "InitMetallicityinSolar");
+        addr[nt] = &All.InitMetallicityinSolar;
+        id[nt++] = REAL;
+#endif
 #if defined(STARS) || defined(BLACKHOLES)
       strcpy(tag[nt], "DesNgb");
       addr[nt] = &All.DesNgb;

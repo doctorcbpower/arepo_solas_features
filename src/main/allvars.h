@@ -498,7 +498,7 @@ typedef unsigned long long peano1D;
 #define BASENUMBER 100
 #define HIGHRESMASSFAC 0.5
 
-#define MAXITER 300000 /*! Maximum number of iterations before process is terminated */
+#define MAXITER 250 /*! Maximum number of iterations before process is terminated */
 
 #ifndef FOF_LINKLENGTH
 #define FOF_LINKLENGTH 0.2

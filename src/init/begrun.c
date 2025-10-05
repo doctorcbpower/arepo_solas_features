@@ -60,7 +60,7 @@ herr_t my_hdf5_error_handler(void *unused);
 
 #include <time.h>
 
-#ifdef STARS 
+#ifdef USE_CELIB
 #include "CELib.h"
 #endif
 
@@ -231,7 +231,7 @@ void begrun2(void)
   if(RestartFlag > 2)
     open_logfiles();
 
-  #ifdef STARS
+  #ifdef USE_CELIB
     /* celib init */
     if(ThisTask == 0)
       CELibShowVersion();
@@ -244,9 +244,9 @@ void begrun2(void)
       CELibShowCurrentStatus();
   #endif     
 
-#if defined(USE_SFR)
+#if defined(USE_SFR) && defined(EEOS_SF)   /* For the default SF scheme in Arepo */
   sfr_init();
-#endif /* #if defined(USE_SFR) */
+#endif /* #if defined(USE_SFR) && defined(EEOS_SF) */
 
 #ifdef PMGRID
   long_range_init_regionsize();

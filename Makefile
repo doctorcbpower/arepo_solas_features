@@ -57,21 +57,27 @@ endif
 
 #Mac OS using MacPorts modules for openmpi, fftw, gsl, hdf5 and hwloc
 ifeq ($(SYSTYPE),"MACOSX")
+BREW := /opt/homebrew/bin/brew
+$(info BREW: $(BREW))
+
 # compiler and its optimization options
 CC        =  mpicc   # sets the C-compiler
 OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
 
-MPICH_LIB = -lmpi
-GSL_INCL  = -I$(brew --prefix gsl)/include
-GSL_LIB   = -L$(brew --prefix gsl)/lib -lgsl -lgslcblas
-HWLOC_LIB = -L/opt/homebrew/lib -lhwloc
+MPICH_LIB = #-lmpi
+GSL_INCL  = -I$(shell $(BREW) --prefix gsl)/include
+GSL_LIB   = -L$(shell $(BREW) --prefix gsl)/lib -lgsl -lgslcblas
+GMP_INCL  = -I$(shell $(BREW) --prefix gmp)/include
+GMP_LIB   = -L$(shell $(BREW) --prefix gmp)/lib -lgmp
 
 # libraries that are included on demand, depending on Config.sh options
-FFTW_INCL = -I/opt/homebrew/include -I/usr/local/include
-FFTW_LIBS = -L/opt/homebrew/lib -I/usr/local/lib
-HDF5_INCL = -I/opt/homebrew/include -DH5_USE_16_API
-HDF5_LIB  = -L/opt/homebrew/lib  -lhdf5 -lz
-HWLOC_INCL= -I/opt/homebrew/include
+FFTW_INCL = -I$(shell $(BREW) --prefix fftw)/include -I/usr/local/include
+FFTW_LIBS = -L$(shell $(BREW) --prefix fftw)/lib -I/usr/local/lib
+HDF5_INCL = -I$(shell $(BREW) --prefix hdf5)/include -DH5_USE_16_API
+HDF5_LIB  = -L$(shell $(BREW) --prefix hdf5)/lib -lhdf5 -lz
+HWLOC_INCL= -I$(shell $(BREW) --prefix hwloc)/include
+HWLOC_LIB = -L$(shell $(BREW) --prefix hwloc)/lib -lhwloc
+
 endif
 # end of Darwin
 
@@ -346,21 +352,25 @@ endif
 
 ifeq (USE_GRACKLE,$(findstring USE_GRACKLE,$(CONFIGVARS)))
 OPTIONS += -DCONFIG_BFLOAT_8
-GRACKLEINCL = -I$(HOME)/models/grackle/include
-GRACKLELIBS = -L$(HOME)/models/grackle/lib -lgrackle
-LDFLAGS = -lgfortran
+GRACKLE_INCL = -I$(HOME)/Codes/grackle/include
+GRACKLE_LIB = -L$(HOME)/Codes/grackle/lib -lgrackle -Wl,-rpath,$(HOME)/Codes/grackle/lib
+ifeq ($(SYSTYPE),"MACOSX")
+LDFLAGS += -L$(shell BREW --prefix gcc)/lib/gcc/current -lgfortran -lquadmath
 else
-GRACKLEINCL =
-GRACKLELIBS =
-LDFLAGS = 
+LDFLAGS += -lgfortran -lquadmath
+endif
+else
+GRACKLE_INCL =
+GRACKLE_LIB =
+LDFLAGS +=
 endif
 ##########################
 #combine compiler options#
 ##########################
 
-CFLAGS = $(OPTIMIZE) $(MPICH_INCL) $(HDF5_INCL) $(GSL_INCL) $(FFTW_INCL) $(HWLOC_INCL) $(CELIB_INCL) $(GRACKLEINCL) -I$(BUILD_DIR) 
+CFLAGS = $(OPTIMIZE) $(MPICH_INCL) $(HDF5_INCL) $(GSL_INCL) $(GMP_INCL) $(FFTW_INCL) $(HWLOC_INCL) $(CELIB_INCL) $(GRACKLE_INCL) -I$(BUILD_DIR)
 
-LIBS = $(GMP_LIB) $(MPICH_LIB) $(HDF5_LIB) $(GSL_LIB) $(FFTW_LIB) $(HWLOC_LIB) $(CELIB_LIB) $(MATH_LIB) $(GRACKLELIBS) $(LDFLAGS)
+LIBS = $(GMP_LIB) $(MPICH_LIB) $(HDF5_LIB) $(GSL_LIB) $(GMP_LIB) $(FFTW_LIB) $(HWLOC_LIB) $(CELIB_LIB) $(MATH_LIB) $(GRACKLE_LIB) $(LDFLAGS)
 
 FOPTIONS = $(OPTIMIZE)
 FFLAGS = $(FOPTIONS)

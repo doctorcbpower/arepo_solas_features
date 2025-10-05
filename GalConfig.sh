@@ -5,8 +5,6 @@
 #  examples/galaxy_merger_star_formation_3d/Config.sh   #
 #########################################################
 
-#ADDBACKGROUNDGRID=16          # Re-grid hydrodynamics quantities on a Oct-tree AMR grid. This does not perform a simulation.
-
 #--------------------------------------- Mesh motion and regularization
 REGULARIZE_MESH_CM_DRIFT                # Mesh regularization; Move mesh generating point towards center of mass to make cells rounder.
 REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED # Limit mesh regularization speed by local sound speed
@@ -32,12 +30,12 @@ GRAVITY_NOT_PERIODIC           # gravity is not treated periodically
 #--------------------------------------- Gravity softening
 NSOFTTYPES=4                    # Number of different softening values to which particle types can be mapped.
 MULTIPLE_NODE_SOFTENING         # If a tree node is to be used which is softened, this is done with the softenings of its different mass components
-INDIVIDUAL_GRAVITY_SOFTENING=32 # bitmask with particle types where the softenig type should be chosen with that of parttype 1 as a reference type
+#INDIVIDUAL_GRAVITY_SOFTENING=32 # bitmask with particle types where the softenig type should be chosen with that of parttype 1 as a reference type
 ADAPTIVE_HYDRO_SOFTENING        # Adaptive softening of gas cells depending on their size
 
 #--------------------------------------- Single/Double Precision
 DOUBLEPRECISION=1        # Mode of double precision: not defined: single; 1: full double precision 2: mixed, 3: mixed, fewer single precisions; unless short of memory, use 1.
-NGB_TREE_DOUBLEPRECISION # if this is enabled, double precision is used for the neighbor node extension
+#NGB_TREE_DOUBLEPRECISION # if this is enabled, double precision is used for the neighbor node extension
 
 #-------------------------------------------- Things for special behaviour
 PROCESS_TIMES_OF_OUTPUTLIST # goes through times of output list prior to starting the simulaiton to ensure that outputs are written as close to the desired time as possible (as opposed to at next possible time if this flag is not active)
@@ -50,13 +48,12 @@ HAVE_HDF5 # needed when HDF5 I/O support is desired (recommended)
 DEBUG # enables core-dumps
 
 #--------------------------------------- non-standard phyiscs
-ENFORCE_JEANS_STABILITY_OF_CELLS # this imposes an adaptive floor for the temperature
+#ENFORCE_JEANS_STABILITY_OF_CELLS # this imposes an adaptive floor for the temperature
 COOLING                          # Simple primordial cooling
-USE_SFR                          # Star formation model, turning dense gas into collisionless partices
+USE_GRACKLE			 # Use Grackle library for cooling
+USE_SFR                          # Activate star formation
+AGORA_SF			 # AGORA star formation scheme
+#STARS
+#WENDLAND_C2_KERNEL
 
-#---------------------------------------  SOLAS-stuff
-AGORA_SF
-STARS
-WENDLAND_C2_KERNEL
-
-LOW_TEMP_COOLING
+#LOW_TEMP_COOLING
