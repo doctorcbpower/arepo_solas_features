@@ -127,10 +127,11 @@ void update_SNII(void)
           struct CELibStructFeedbackInput Input = 
             {
               .Mass = (PPS(i).Mass * All.UnitMass_in_g / SOLAR_MASS),                 
-              .Metallicity = 0.0004,          
               .MassConversionFactor = 1, 
               .Elements = elements,
             };
+            
+          Input.Metallicity=0.0004;
 
           struct CELibStructFeedbackOutput Output = 
             CELibGetFeedback(Input, CELibFeedbackType_SNII);

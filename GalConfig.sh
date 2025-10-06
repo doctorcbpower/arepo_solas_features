@@ -12,7 +12,7 @@ REGULARIZE_MESH_FACE_ANGLE              # Use maximum face angle as roundness cr
 
 #--------------------------------------- Refinement and derefinement
 REFINEMENT_SPLIT_CELLS # Refinement
-#REFINEMENT_MERGE_CELLS                   # Derefinement
+REFINEMENT_MERGE_CELLS                   # Derefinement
 REFINEMENT_VOLUME_LIMIT    # Limit the volume of cells and the maximum volume difference between neighboring cels
 NODEREFINE_BACKGROUND_GRID # Do not de-refine low-res gas cells in zoom simulations
 
@@ -51,9 +51,13 @@ DEBUG # enables core-dumps
 #ENFORCE_JEANS_STABILITY_OF_CELLS # this imposes an adaptive floor for the temperature
 COOLING                          # Simple primordial cooling
 USE_GRACKLE			 # Use Grackle library for cooling
+GRACKLE_CHEMISTRY=0
 USE_SFR                          # Activate star formation
 AGORA_SF			 # AGORA star formation scheme
-#STARS
+USE_CELIB
+STARS
+PASSIVE_SCALARS=1
+METALS
 #WENDLAND_C2_KERNEL
 
 #LOW_TEMP_COOLING

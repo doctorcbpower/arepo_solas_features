@@ -218,9 +218,11 @@ static int star_ngb_feedback_evaluate(int target, int mode, int threadid)
   dt  = All.TimeStep;
   dt *= All.cf_atime / All.cf_time_hubble_a;
 
-/* stellar wind */ 
+#ifdef WINDS
+/* stellar wind */
 double massloss = interpolate_stellar_mass(star_mass, All.Time);
-  
+#endif
+    
 #ifdef STAR_BY_STAR
   if(snIIflag > 0)
     energyfeed = 0;

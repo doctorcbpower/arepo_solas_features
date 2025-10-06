@@ -136,7 +136,6 @@ void sfr_create_star_particles(void)
               sum_sm += P[i].Mass * (1 - exp(-p));
 
 #if defined(REFINEMENT_SPLIT_CELLS) && defined(REFINEMENT_MERGE_CELLS)
-
               if(P[i].Mass < 2.0 * All.TargetGasMass)
 #ifdef SFR_KEEP_CELLS
                 mass_of_star = 0.9 * P[i].Mass;
@@ -338,13 +337,13 @@ void convert_cell_into_star(int i, double birthtime)
     {
       .R = (double)rand()/(double)RAND_MAX,
       .InitialMass_in_Msun = (P[i].Mass * All.UnitMass_in_g / SOLAR_MASS),
-      .Metallicity = SP[NumStars].Metals
     };
+  Input.Metallicity = SP[NumStars].Metals;
 
   SP[NumStars].SNIITime = birthtime + CELibGetNextEventTime(Input, CELibFeedbackType_SNII) 
     / (1.e6) / All.UnitTime_in_Megayears;
 #else
-  SP[NumStars].SNIITime = birthtime + All.FeedbackTime/(1.e6)/All.UnitTime_in_Megayears;
+    SP[NumStars].SNIITime = birthtime + 0.1; //All.FeedbackTime/(1.e6)/All.UnitTime_in_Megayears;
 #endif
   //timebin_add_particle(&TimeBinsStar, NumStars, -1, 0, 1);
  
@@ -442,10 +441,10 @@ void spawn_star_from_cell(int igas, double birthtime, int istar, MyDouble mass_o
     {
       .R = (double)rand()/(double)RAND_MAX,
       .InitialMass_in_Msun = (P[istar].Mass * All.UnitMass_in_g / SOLAR_MASS),
-      .Metallicity = SP[NumStars].Metals
     };
+  Input.Metallicity = SP[NumStars].Metals;
 
-  SP[NumStars].SNIITime = birthtime + CELibGetNextEventTime(Input, CELibFeedbackType_SNII) 
+  SP[NumStars].SNIITime = birthtime + CELibGetNextEventTime(Input, CELibFeedbackType_SNII)
     / (1.e6) / All.UnitTime_in_Megayears;  
 #else
   SP[NumStars].SNIITime = birthtime + All.FeedbackTime/(1.e6)/All.UnitTime_in_Megayears;
