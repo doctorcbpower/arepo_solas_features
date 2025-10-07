@@ -760,6 +760,15 @@ void IonizeParamsUVB(void)
     }
 
   logz = log10(redshift + 1.0);
+    
+  /* Basic sanity checks: make sure the table exists and has entries */
+  if(PhotoTUVB == NULL || NheattabUVB <= 0)
+  {
+    /* no UVB/photo table: fall back to zero ionization (matches original fallback) */
+    SetZeroIonization();
+    return;
+  }
+    
   ilow = 0;
   for(i = 0; i < NheattabUVB; i++)
     {
@@ -769,16 +778,49 @@ void IonizeParamsUVB(void)
         break;
     }
 
+  /* Need at least two table points for interpolation (ilow and ilow+1). If we are at the last
+     table point (ilow == NheattabUVB-1) we cannot access ilow+1. Treat as out-of-range. */
+  if(NheattabUVB < 2 || ilow >= NheattabUVB - 1)
+  {
+    /* either a single-point table (no interpolation) or logz beyond table range:
+        follow existing code's conservative behaviour */
+    SetZeroIonization();
+    return;
+  }
+    
   dzlow = logz - PhotoTUVB[ilow].variable;
   dzhi  = PhotoTUVB[ilow + 1].variable - logz;
+    
+  /* guard against degenerate spacing */
+  if((dzlow + dzhi) == 0.0)
+  {
+    SetZeroIonization();
+    return;
+  }
 
-  if(NheattabUVB == 0 || logz > PhotoTUVB[NheattabUVB - 1].variable || PhotoTUVB[ilow].gH0 == 0 || PhotoTUVB[ilow + 1].gH0 == 0)
+    /* additional check: if logz is greater than the last table entry, original code
+     set zero ionization — keep that behaviour */
+    if(logz > PhotoTUVB[NheattabUVB - 1].variable)
     {
-      SetZeroIonization();
-      return;
+        SetZeroIonization();
+        return;
     }
-  else
-    pc.J_UV = 1;
+    
+    /* also check for zero rates in table entries (as original code did) */
+    if(PhotoTUVB[ilow].gH0 == 0 || PhotoTUVB[ilow + 1].gH0 == 0)
+    {
+        SetZeroIonization();
+        return;
+    }
+    else
+        pc.J_UV = 1;
+//  if(NheattabUVB == 0 || logz > PhotoTUVB[NheattabUVB - 1].variable || PhotoTUVB[ilow].gH0 == 0 || PhotoTUVB[ilow + 1].gH0 == 0)
+//    {
+//      SetZeroIonization();
+//      return;
+//    }
+//  else
+//    pc.J_UV = 1;
 
   pc.gJH0   = pow(10., (dzhi * log10(PhotoTUVB[ilow].gH0) + dzlow * log10(PhotoTUVB[ilow + 1].gH0)) / (dzlow + dzhi));
   pc.gJHe0  = pow(10., (dzhi * log10(PhotoTUVB[ilow].gHe) + dzlow * log10(PhotoTUVB[ilow + 1].gHe)) / (dzlow + dzhi));
