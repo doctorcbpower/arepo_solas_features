@@ -857,7 +857,8 @@ void InitCool(void)
 #ifdef USE_GRACKLE
    InitGrackle();
 // TODO: #else /* ifndef  USE_GRACKLE*/
-  /* set default hydrogen mass fraction */
+#endif
+    /* set default hydrogen mass fraction */
   gs.XH = HYDROGEN_MASSFRAC;
 
   /* zero photo-ionization/heating rates */
@@ -876,7 +877,6 @@ void InitCool(void)
   set_cosmo_factors_for_current_time();
 
   IonizeParams();
-#endif /* TODO: USE_GRACKLE */
 }
 
 /*! \brief Apply the isochoric cooling to all the active gas cells.
