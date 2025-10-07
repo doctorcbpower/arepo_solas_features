@@ -325,252 +325,254 @@ void update_list_of_active_star_particles(void)
 
 void perform_end_of_step_physics(void)
 {
-  int idx, i;
-  double pj, p0;
-  double kick_vector[3], momentum_kick[3];
-
-  momentum_kick[0] = momentum_kick[1] = momentum_kick[2] = 0;
-
-#ifdef BLACKHOLES
-#ifdef BONDI_ACCRETION
-  int j, bin;
-  double dt;
-  /* accrete mass, angular momentum onto the bh and drain ngb cells */
-  for(i=0; i<NumBhs; i++)
-    {
-      bin = BhP[i].TimeBinBh;
-      dt  = (bin ? (((integertime)1) << bin) : 0) * All.Timebase_interval;
-      
-      PPB(i).Mass += (1-All.Epsilon_r) * BhP[i].AccretionRate * dt;
-
-      BhP[i].AngularMomentum[0] += BhP[i].AccretionRate * dt * BhP[i].VelocityGasCircular[0];
-      BhP[i].AngularMomentum[1] += BhP[i].AccretionRate * dt * BhP[i].VelocityGasCircular[1];
-      BhP[i].AngularMomentum[2] += BhP[i].AccretionRate * dt * BhP[i].VelocityGasCircular[2];
+    int idx, i;
+    double pj, p0;
+    double kick_vector[3], momentum_kick[3];
     
-      for(j=0; j<NumGas; j++)
+    momentum_kick[0] = momentum_kick[1] = momentum_kick[2] = 0;
+    
+#ifdef BLACKHOLES
+    
+#ifdef BONDI_ACCRETION
+    int j, bin;
+    double dt;
+    /* accrete mass, angular momentum onto the bh and drain ngb cells */
+    for(i=0; i<NumBhs; i++)
+    {
+        bin = BhP[i].TimeBinBh;
+        dt  = (bin ? (((integertime)1) << bin) : 0) * All.Timebase_interval;
+        PPB(i).Mass += (1-All.Epsilon_r) * BhP[i].AccretionRate * dt;
+        BhP[i].AngularMomentum[0] += BhP[i].AccretionRate * dt * BhP[i].VelocityGasCircular[0];
+        BhP[i].AngularMomentum[1] += BhP[i].AccretionRate * dt * BhP[i].VelocityGasCircular[1];
+        BhP[i].AngularMomentum[2] += BhP[i].AccretionRate * dt * BhP[i].VelocityGasCircular[2];
+        for(j=0; j<NumGas; j++)
         {
-          if(SphP[j].MassDrain > 0)
+            if(SphP[j].MassDrain > 0)
             {
-              if(P[j].Mass - SphP[j].MassDrain < 0.1*P[j].Mass)
+                if(P[j].Mass - SphP[j].MassDrain < 0.1*P[j].Mass)
                 {
-                  P[j].Mass -= 0.9*P[j].Mass;
-                  BhP[i].MassToDrain += SphP[j].MassDrain - 0.9*P[j].Mass; 
-                  /* we're also losing thermal and kinetic energy & momentum */
-                
-                  /* update total energy */
-                  SphP[j].Energy *= 0.1;
-
-                  /* update momentum */
-                  SphP[j].Momentum[0] *= 0.1;
-                  SphP[j].Momentum[1] *= 0.1;
-                  SphP[j].Momentum[2] *= 0.1;
+                    P[j].Mass -= 0.9*P[j].Mass;
+                    BhP[i].MassToDrain += SphP[j].MassDrain - 0.9*P[j].Mass;
+                    /* we're also losing thermal and kinetic energy & momentum */
+                    
+                    /* update total energy */
+                    SphP[j].Energy *= 0.1;
+                    
+                    /* update momentum */
+                    SphP[j].Momentum[0] *= 0.1;
+                    SphP[j].Momentum[1] *= 0.1;
+                    SphP[j].Momentum[2] *= 0.1;
                 }
-              else
+                else
                 {
-                  P[j].Mass -= SphP[j].MassDrain;
-                
-                  /* update total energy */
-                  SphP[j].Energy *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
-
-                  /* update momentum */
-                  SphP[j].Momentum[0] *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
-                  SphP[j].Momentum[1] *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
-                  SphP[j].Momentum[2] *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
+                    P[j].Mass -= SphP[j].MassDrain;
+                    
+                    /* update total energy */
+                    SphP[j].Energy *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
+                    
+                    /* update momentum */
+                    SphP[j].Momentum[0] *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
+                    SphP[j].Momentum[1] *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
+                    SphP[j].Momentum[2] *= (P[j].Mass)/(P[j].Mass + SphP[j].MassDrain);
                 }
-          
-              SphP[j].MassDrain = 0;
+                SphP[j].MassDrain = 0;
             }
         }
     }
 #endif
-
+    
 #ifdef INFALL_ACCRETION
-  for(i=0; i<NumBhs; i++)
+    for(i=0; i<NumBhs; i++)
     {
-      PPB(i).Mass += (1-All.Epsilon_r) * BhP[i].Accretion;
-      BhP[i].Accretion = 0;
+        PPB(i).Mass += (1-All.Epsilon_r) * BhP[i].Accretion;
+        BhP[i].Accretion = 0;
     }
 #endif
+    
 #endif
-
+    
     struct pv_update_data pvd;
     if(All.ComovingIntegrationOn)
-      {
+    {
         pvd.atime    = All.Time;
         pvd.hubble_a = hubble_function(All.Time);
         pvd.a3inv    = 1 / (All.Time * All.Time * All.Time);
-      }
+    }
     else
         pvd.atime = pvd.hubble_a = pvd.a3inv = 1.0;
-
+    
     /* inject feedback to ngb cells */
     if(All.Time >= All.FeedbackTime)
-    {   
-      if(All.FeedbackFlag > 0)
+    {
+        if(All.FeedbackFlag > 0)
         {
-          for(idx = 0; idx < TimeBinsHydro.NActiveParticles; idx++)
+            for(idx = 0; idx < TimeBinsHydro.NActiveParticles; idx++)
             {
-              i = TimeBinsHydro.ActiveParticleList[idx];
-              if(i < 0)
-              continue;
-
+                i = TimeBinsHydro.ActiveParticleList[idx];
+                if(i < 0)
+                    continue;
+                
 #ifdef BLACKHOLES
-              /* dump mass, momentum and energy injected by bh */
-              if(SphP[i].ThermalFeed > 0 || SphP[i].KineticFeed > 0)
+                /* dump mass, momentum and energy injected by bh */
+                if(SphP[i].ThermalFeed > 0 || SphP[i].KineticFeed > 0)
                 {
-                  /* add mass */
-                  P[i].Mass += SphP[i].MassLoading;
-
-                  /* add kinetic energy */
-                  SphP[i].Energy += SphP[i].KineticFeed * All.cf_atime*All.cf_atime;
-
-                  /* calculate momentum feed exactly so energy is conserved */
-                  /*-> we need to do this here so that particle properties don't change between loading the buffer and emptying it*/
-                  kick_vector[0] = SphP[i].BhKickVector[0];
-                  kick_vector[1] = SphP[i].BhKickVector[1];
-                  kick_vector[2] = SphP[i].BhKickVector[2];
-
-                  p0 = sqrt(pow(SphP[i].Momentum[0], 2) + pow(SphP[i].Momentum[1], 2) + pow(SphP[i].Momentum[2], 2));
-              
-                  pj = sqrt(2 * P[i].Mass * (SphP[i].Energy - (P[i].Mass-SphP[i].MassLoading)*SphP[i].Utherm*All.cf_atime*All.cf_atime)) - p0;
-    
-                  momentum_kick[0] = kick_vector[0] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
-                  momentum_kick[1] = kick_vector[1] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
-                  momentum_kick[2] = kick_vector[2] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2)); 
-   
-                  /* update total energy */
-                  SphP[i].Energy += SphP[i].ThermalFeed * All.cf_atime*All.cf_atime;
-                  All.EnergyExchange[1] += SphP[i].ThermalFeed + SphP[i].KineticFeed;
-                  /* update momentum */
-                  SphP[i].Momentum[0] += momentum_kick[0];
-                  SphP[i].Momentum[1] += momentum_kick[1];
-                  SphP[i].Momentum[2] += momentum_kick[2];
-                  /* update velocities */
-                  update_primitive_variables_single(P, SphP, i, &pvd);
-                  /* update internal energy */
-                  update_internal_energy(P, SphP, i, &pvd);
-                  /* update pressure */
-                  set_pressure_of_cell_internal(P, SphP, i);
-                  /* set feed flags to zero */
-                  SphP[i].ThermalFeed = SphP[i].KineticFeed = SphP[i].MassLoading = 0;
-                  momentum_kick[0] = momentum_kick[1] = momentum_kick[2] = 0;
-#ifdef PASSIVE_SCALARS                 
-                  /* tracer field advected passively */
-                  SphP[i].PScalars[0] = 1;
-                  SphP[i].PConservedScalars[0] = P[i].Mass;
+                    /* add mass */
+                    P[i].Mass += SphP[i].MassLoading;
+                    
+                    /* add kinetic energy */
+                    SphP[i].Energy += SphP[i].KineticFeed * All.cf_atime*All.cf_atime;
+                    
+                    /* calculate momentum feed exactly so energy is conserved */
+                    /*-> we need to do this here so that particle properties don't change between loading the buffer and emptying it*/
+                    kick_vector[0] = SphP[i].BhKickVector[0];
+                    kick_vector[1] = SphP[i].BhKickVector[1];
+                    kick_vector[2] = SphP[i].BhKickVector[2];
+                    
+                    p0 = sqrt(pow(SphP[i].Momentum[0], 2) + pow(SphP[i].Momentum[1], 2) + pow(SphP[i].Momentum[2], 2));
+                    
+                    pj = sqrt(2 * P[i].Mass * (SphP[i].Energy - (P[i].Mass-SphP[i].MassLoading)*SphP[i].Utherm*All.cf_atime*All.cf_atime)) - p0;
+                    
+                    momentum_kick[0] = kick_vector[0] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                    momentum_kick[1] = kick_vector[1] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                    momentum_kick[2] = kick_vector[2] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                    
+                    /* update total energy */
+                    SphP[i].Energy += SphP[i].ThermalFeed * All.cf_atime*All.cf_atime;
+                    All.EnergyExchange[1] += SphP[i].ThermalFeed + SphP[i].KineticFeed;
+                    /* update momentum */
+                    SphP[i].Momentum[0] += momentum_kick[0];
+                    SphP[i].Momentum[1] += momentum_kick[1];
+                    SphP[i].Momentum[2] += momentum_kick[2];
+                    /* update velocities */
+                    update_primitive_variables_single(P, SphP, i, &pvd);
+                    /* update internal energy */
+                    update_internal_energy(P, SphP, i, &pvd);
+                    /* update pressure */
+                    set_pressure_of_cell_internal(P, SphP, i);
+                    /* set feed flags to zero */
+                    SphP[i].ThermalFeed = SphP[i].KineticFeed = SphP[i].MassLoading = 0;
+                    momentum_kick[0] = momentum_kick[1] = momentum_kick[2] = 0;
+#ifdef PASSIVE_SCALARS
+                    /* tracer field advected passively */
+                    SphP[i].PScalars[0] = 1;
+                    SphP[i].PConservedScalars[0] = P[i].Mass;
 #endif
                 }
-#endif          
+#endif
             }
 #ifdef BURST_MODE
-          All.FeedbackFlag = -1;
-#endif 
-        }    
-
-      for(idx = 0; idx < TimeBinsHydro.NActiveParticles; idx++)
+            All.FeedbackFlag = -1;
+#endif
+        } // if(All.FeedbackFlag>0)
+        
+        for(idx = 0; idx < TimeBinsHydro.NActiveParticles; idx++)
         {
-          i = TimeBinsHydro.ActiveParticleList[idx];
-          if(i < 0)
-          continue;
-
-#ifdef STARS            
-          /* dump mass, momentum and energy injected by stars */   
-
-          /* calculate kick */
-          kick_vector[0] = SphP[i].MomentumKickVector[0];
-          kick_vector[1] = SphP[i].MomentumKickVector[1];
-          kick_vector[2] = SphP[i].MomentumKickVector[2];
-#ifdef WINDS           
-          if(SphP[i].MomentumFeed > 0)
-            {                             
-              /******  momentum conserving wind *****/
-
-              /* add mass */
-              //P[i].Mass += SphP[i].MassFeed;
-              
-              pj = SphP[i].MomentumFeed;
-
-              /* update momentum */
-              SphP[i].Momentum[0] += kick_vector[0] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
-              SphP[i].Momentum[1] += kick_vector[1] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
-              SphP[i].Momentum[2] += kick_vector[2] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));  
-
-              All.EnergyExchange[3] += SphP[i].MomentumFeed;     
-                 
-              /* update velocities */
-              update_primitive_variables_single(P, SphP, i, &pvd);
-              /* update total energy */
-              SphP[i].Energy = SphP[i].Utherm * P[i].Mass + 
-                0.5 * P[i].Mass * (pow(P[i].Vel[0], 2) + pow(P[i].Vel[1], 2) + pow(P[i].Vel[2], 2));               
-              /* update internal energy */
-              update_internal_energy(P, SphP, i, &pvd);
-              /* update pressure */
-              set_pressure_of_cell_internal(P, SphP, i);
-              /* set feed flags to zero */
-              SphP[i].MomentumFeed = 0;
-            }
-#endif
-#ifdef SUPERNOVAE          
-          if(SphP[i].ThermalEnergyFeed || SphP[i].KineticEnergyFeed> 0)
-            {    
-              /***** energy conserving supernova *****/
-
-              /* add mass */
-              //P[i].Mass += SphP[i].MassFeed; remember to set flag to 0
-              
-              /* add kinetic energy */
-              SphP[i].Energy += SphP[i].KineticEnergyFeed * All.cf_atime*All.cf_atime;
-
-              /* calculate momentum feed exactly so energy is conserved */
-              /*-> we need to do this here so that particle properties don't change between loading the buffer and emptying it*/
-              p0 = sqrt(pow(SphP[i].Momentum[0], 2) + pow(SphP[i].Momentum[1], 2) + pow(SphP[i].Momentum[2], 2));
-
-              pj = sqrt(2 * P[i].Mass * (SphP[i].Energy - (P[i].Mass/*-SphP[i].MassFeed*/)*SphP[i].Utherm*All.cf_atime*All.cf_atime)) - p0;
-
-              momentum_kick[0] = kick_vector[0] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
-              momentum_kick[1] = kick_vector[1] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
-              momentum_kick[2] = kick_vector[2] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2)); 
-
-              /* update total energy */
-              SphP[i].Energy += SphP[i].ThermalEnergyFeed * All.cf_atime*All.cf_atime;
-              All.EnergyExchange[5] += SphP[i].ThermalEnergyFeed + SphP[i].KineticEnergyFeed; 
-              /* update momentum */
-              SphP[i].Momentum[0] += momentum_kick[0];
-              SphP[i].Momentum[1] += momentum_kick[1];
-              SphP[i].Momentum[2] += momentum_kick[2];
-              /* update velocities */
-              update_primitive_variables_single(P, SphP, i, &pvd);
-              /* update internal energy */
-              update_internal_energy(P, SphP, i, &pvd);
-              /* update pressure */
-              set_pressure_of_cell_internal(P, SphP, i);
-              /* set feed flags to zero */
-              SphP[i].ThermalEnergyFeed = SphP[i].KineticEnergyFeed = 0;
-            }
-#endif
-        }
-       
-    }
-#endif
-  MPI_Allreduce(&All.EnergyExchange, &All.EnergyExchangeTot, 6, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD); // synchronize all tasks
-  
-#ifdef BLACKHOLES
-  mpi_printf("BLACK_HOLES: Energy given by BH = %e, Energy taken up by gas particles = %e \n", 
-    All.EnergyExchangeTot[0] * All.UnitEnergy_in_cgs, All.EnergyExchangeTot[1] * All.UnitEnergy_in_cgs);
-#endif /* ifdef BLACKHOLES */
+            i = TimeBinsHydro.ActiveParticleList[idx];
+            if(i < 0)
+                continue;
+            
 #ifdef STARS
-  mpi_printf("STARS: Momentum given by StarParts = %e, Momentum taken up by gas particles = %e \n", 
-    All.EnergyExchangeTot[2] * All.UnitMass_in_g * All.UnitVelocity_in_cm_per_s, 
-    All.EnergyExchangeTot[3] * All.UnitMass_in_g * All.UnitVelocity_in_cm_per_s);
-  mpi_printf("STARS: Energy given by StarParts = %e, Energy taken up by gas particles = %e \n", 
-    All.EnergyExchangeTot[4] * All.UnitEnergy_in_cgs, All.EnergyExchangeTot[5] * All.UnitEnergy_in_cgs);
+            /* dump mass, momentum and energy injected by stars */
+            
+            /* calculate kick */
+            kick_vector[0] = SphP[i].MomentumKickVector[0];
+            kick_vector[1] = SphP[i].MomentumKickVector[1];
+            kick_vector[2] = SphP[i].MomentumKickVector[2];
+#ifdef WINDS
+            if(SphP[i].MomentumFeed > 0)
+            {
+                /******  momentum conserving wind *****/
+                
+                /* add mass */
+                //P[i].Mass += SphP[i].MassFeed;
+                
+                pj = SphP[i].MomentumFeed;
+                
+                /* update momentum */
+                SphP[i].Momentum[0] += kick_vector[0] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                SphP[i].Momentum[1] += kick_vector[1] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                SphP[i].Momentum[2] += kick_vector[2] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                
+                All.EnergyExchange[3] += SphP[i].MomentumFeed;
+                
+                /* update velocities */
+                update_primitive_variables_single(P, SphP, i, &pvd);
+                /* update total energy */
+                SphP[i].Energy = SphP[i].Utherm * P[i].Mass +
+                0.5 * P[i].Mass * (pow(P[i].Vel[0], 2) + pow(P[i].Vel[1], 2) + pow(P[i].Vel[2], 2));
+                /* update internal energy */
+                update_internal_energy(P, SphP, i, &pvd);
+                /* update pressure */
+                set_pressure_of_cell_internal(P, SphP, i);
+                /* set feed flags to zero */
+                SphP[i].MomentumFeed = 0;
+            }
 #endif
+
+#ifdef SUPERNOVAE
+            if(SphP[i].ThermalEnergyFeed || SphP[i].KineticEnergyFeed> 0)
+            {
+                /***** energy conserving supernova *****/
+                
+                /* add mass */
+                //P[i].Mass += SphP[i].MassFeed; remember to set flag to 0
+                
+                /* add kinetic energy */
+                SphP[i].Energy += SphP[i].KineticEnergyFeed * All.cf_atime*All.cf_atime;
+                
+                /* calculate momentum feed exactly so energy is conserved */
+                /*-> we need to do this here so that particle properties don't change between loading the buffer and emptying it*/
+                p0 = sqrt(pow(SphP[i].Momentum[0], 2) + pow(SphP[i].Momentum[1], 2) + pow(SphP[i].Momentum[2], 2));
+                
+                pj = sqrt(2 * P[i].Mass * (SphP[i].Energy - (P[i].Mass/*-SphP[i].MassFeed*/)*SphP[i].Utherm*All.cf_atime*All.cf_atime)) - p0;
+                
+                momentum_kick[0] = kick_vector[0] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                momentum_kick[1] = kick_vector[1] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                momentum_kick[2] = kick_vector[2] * pj / sqrt(pow(kick_vector[0], 2) + pow(kick_vector[1], 2) + pow(kick_vector[2], 2));
+                
+                /* update total energy */
+                SphP[i].Energy += SphP[i].ThermalEnergyFeed * All.cf_atime*All.cf_atime;
+                All.EnergyExchange[5] += SphP[i].ThermalEnergyFeed + SphP[i].KineticEnergyFeed;
+                /* update momentum */
+                SphP[i].Momentum[0] += momentum_kick[0];
+                SphP[i].Momentum[1] += momentum_kick[1];
+                SphP[i].Momentum[2] += momentum_kick[2];
+                /* update velocities */
+                update_primitive_variables_single(P, SphP, i, &pvd);
+                /* update internal energy */
+                update_internal_energy(P, SphP, i, &pvd);
+                /* update pressure */
+                set_pressure_of_cell_internal(P, SphP, i);
+                /* set feed flags to zero */
+                SphP[i].ThermalEnergyFeed = SphP[i].KineticEnergyFeed = 0;
+            }
+#endif
+#endif
+        } // for(idx...
+        
+    } // if(All.Time >= All.FeedbackTime)
+
+    MPI_Allreduce(&All.EnergyExchange, &All.EnergyExchangeTot, 6, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD); // synchronize all tasks
+    
+#ifdef BLACKHOLES
+    mpi_printf("BLACK_HOLES: Energy given by BH = %e, Energy taken up by gas particles = %e \n",
+               All.EnergyExchangeTot[0] * All.UnitEnergy_in_cgs, All.EnergyExchangeTot[1] * All.UnitEnergy_in_cgs);
+#endif /* ifdef BLACKHOLES */
+    
+#ifdef STARS
+    mpi_printf("STARS: Momentum given by StarParts = %e, Momentum taken up by gas particles = %e \n",
+               All.EnergyExchangeTot[2] * All.UnitMass_in_g * All.UnitVelocity_in_cm_per_s,
+               All.EnergyExchangeTot[3] * All.UnitMass_in_g * All.UnitVelocity_in_cm_per_s);
+    mpi_printf("STARS: Energy given by StarParts = %e, Energy taken up by gas particles = %e \n",
+               All.EnergyExchangeTot[4] * All.UnitEnergy_in_cgs, All.EnergyExchangeTot[5] * All.UnitEnergy_in_cgs);
+#endif
+    
 #ifdef BURST_MODE
-  if(All.EnergyExchangeTot[0] - All.EnergyExchangeTot[1] > 10)  
-    All.FeedbackFlag = 1;
-#endif  
-}
+    if(All.EnergyExchangeTot[0] - All.EnergyExchangeTot[1] > 10)
+        All.FeedbackFlag = 1;
+#endif
+} // perform_end_of_step_physics(void)
 
 static int int_compare(const void *a, const void *b)
 {

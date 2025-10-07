@@ -345,7 +345,7 @@ HWLOC_INCL =
 HWLOC_LIB =
 endif
 
-ifeq (STARS,$(findstring STARS,$(CONFIGVARS)))
+ifeq (USE_CELIB,$(findstring USE_CELIB,$(CONFIGVARS)))
 CELIB_INCL = -I./celib/src
 CELIB_LIB = -L./celib/src -lCELib
 endif
