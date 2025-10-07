@@ -815,7 +815,6 @@ void InitCool(void)
 #ifdef USE_GRACKLE
    InitGrackle();
 // TODO: #else /* ifndef  USE_GRACKLE*/
-#else
   /* set default hydrogen mass fraction */
   gs.XH = HYDROGEN_MASSFRAC;
 

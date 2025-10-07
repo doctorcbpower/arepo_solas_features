@@ -11,13 +11,13 @@ REGULARIZE_MESH_CM_DRIFT_USE_SOUNDSPEED # Limit mesh regularization speed by loc
 REGULARIZE_MESH_FACE_ANGLE              # Use maximum face angle as roundness criterion in mesh regularization
 
 #--------------------------------------- Refinement and derefinement
-REFINEMENT_SPLIT_CELLS # Refinement
+REFINEMENT_SPLIT_CELLS 			 # Refinement
 REFINEMENT_MERGE_CELLS                   # Derefinement
-REFINEMENT_VOLUME_LIMIT    # Limit the volume of cells and the maximum volume difference between neighboring cels
-NODEREFINE_BACKGROUND_GRID # Do not de-refine low-res gas cells in zoom simulations
+REFINEMENT_VOLUME_LIMIT    		 # Limit the volume of cells and the maximum volume difference between neighboring cels
+NODEREFINE_BACKGROUND_GRID 		 # Do not de-refine low-res gas cells in zoom simulations
 
 #--------------------------------------- Time integration options
-TREE_BASED_TIMESTEPS # non-local timestep criterion (take 'signal speed' into account)
+TREE_BASED_TIMESTEPS 			 # non-local timestep criterion (take 'signal speed' into account)
 
 #--------------------------------------- Gravity treatment
 SELFGRAVITY                    # gravitational intraction between simulation particles/cells

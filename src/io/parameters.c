@@ -457,17 +457,16 @@ void read_parameter_file(char *fname)
 #endif /* #ifdef ONEDIMS_SPHERICAL */
 
 /* Cooling */
-#if defined(COOLING)
-#ifndef USE_GRACKLE
-        strcpy(tag[nt], "TreecoolFile");
-        addr[nt] = &All.TreecoolFile;
-        id[nt++] = STRING;
-#else
+#ifdef COOLING
+      strcpy(tag[nt], "TreecoolFile");
+      addr[nt] = &All.TreecoolFile;
+      id[nt++] = STRING;
+#ifdef USE_GRACKLE
         strcpy(tag[nt], "GrackleDataFile");
         addr[nt] = &All.GrackleDataFile;
         id[nt++] = STRING;
-#endif
-#endif /* #if defined(COOLING) */
+#endif /* ifdef USE_GRACKLE */
+#endif /* ifdef COOLING */
         
 /* Star Formation */
 #ifdef USE_SFR
@@ -535,6 +534,7 @@ void read_parameter_file(char *fname)
         addr[nt] = &All.InitMetallicityinSolar;
         id[nt++] = REAL;
 #endif
+        
 #if defined(STARS) || defined(BLACKHOLES)
       strcpy(tag[nt], "DesNgb");
       addr[nt] = &All.DesNgb;
