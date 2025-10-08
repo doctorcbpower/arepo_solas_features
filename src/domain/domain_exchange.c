@@ -95,43 +95,44 @@ void domain_resize_storage(int count_get, int count_get_sph, int option_flag)
 #ifdef BLACKHOLES
 void domain_resize_storage_bhs(int count_get_bhs)
 {
-  /*int bhload       = NumBhs + count_get_bhs;
-  int loc_data_bh  = bhload;
-  int res_bh;
+  int bhload = NumBhs + count_get_bhs;
+  int loc_data_bh = bhload;
+  int max_bhload;
 
-  MPI_Allreduce(&loc_data_bh, &res_bh, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-  int max_bhload   = res_bh;
+  MPI_Allreduce(&loc_data_bh, &max_bhload, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   
-  if(max_bhload > (1.0 - ALLOC_TOLERANCE) * All.MaxPartBhs || max_bhload < (1.0 - 3 * ALLOC_TOLERANCE) * All.MaxPartBhs)
+  if(max_bhload != 0 && (max_bhload > (1.0 - ALLOC_TOLERANCE) * All.MaxPartBhs 
+    || max_bhload < (1.0 - 3 * ALLOC_TOLERANCE) * All.MaxPartBhs))
     {
       All.MaxPartBhs = max_bhload / (1.0 - 2 * ALLOC_TOLERANCE);
+      
+      if (All.MaxPartBhs < ALLOC_STARBH_ROOM)
+        All.MaxPartBhs = ALLOC_STARBH_ROOM;
+      
       reallocate_memory_maxpartbhs();
-    }*/
+    }
 }
 #endif
 
 #ifdef STARS
 void domain_resize_storage_stars(int count_get_stars)
 {
-  int starload       = NumStars + count_get_stars;
-  int loc_data_star  = starload;
-  int res_star;
+  int starload = NumStars + count_get_stars;
+  int loc_data_star = starload;
+  int max_starload;
 
-  MPI_Allreduce(&loc_data_star, &res_star, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-  int max_starload   = res_star;
-
-  if(max_starload > 250)
-  {
+  MPI_Allreduce(&loc_data_star, &max_starload, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   
-  if(max_starload > (1.0 - ALLOC_TOLERANCE) * All.MaxPartStars || max_starload < (1.0 - 3 * ALLOC_TOLERANCE) * All.MaxPartStars)
+  if(max_starload != 0 && (max_starload > (1.0 - ALLOC_TOLERANCE) * All.MaxPartStars 
+    || max_starload < (1.0 - 3 * ALLOC_TOLERANCE) * All.MaxPartStars))
     {
       All.MaxPartStars = max_starload / (1.0 - 2 * ALLOC_TOLERANCE);
-      reallocate_memory_maxpartstars();
+      
+      if(All.MaxPartStars < ALLOC_STARBH_ROOM)
+        All.MaxPartStars = ALLOC_STARBH_ROOM;
+      
+        reallocate_memory_maxpartstars();
     }
-
-  }
 }
 #endif
 

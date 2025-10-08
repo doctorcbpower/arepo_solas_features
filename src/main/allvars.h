@@ -320,7 +320,10 @@ extern hwloc_cpuset_t cpuset_thread[NUM_THREADS];
 #else /* #ifdef ONEDIMS */
 #define ALLOC_TOLERANCE 0.1
 #endif /* #ifdef ONEDIMS #else */
-#define ALLOC_STARBH_ROOM 0.02
+
+#if defined(STARS) || defined(BLACKHOLES)
+#define ALLOC_STARBH_ROOM 16
+#endif 
 
 #ifdef TOLERATE_WRITE_ERROR
 #define IO_TRIALS 20
