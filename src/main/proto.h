@@ -455,6 +455,7 @@ void set_softenings(void);
 void set_units(void);
 
 void setup_smoothinglengths(void);
+void setup_smoothinglengths_particles(void);
 void sumup_large_ints(int n, int *src, long long *res);
 void sumup_longs(int n, long long *src, long long *res);
 void statistics(void);

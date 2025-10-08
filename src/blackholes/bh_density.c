@@ -228,8 +228,20 @@ void bh_density(void)
       BhP[i].DensityFlag = 1;
     }
 
+  mpi_printf("BH_DENSITY: Start density and neighbour search for %d black holes.\n", NumBhs);
   generic_set_MaxNexport();
-
+  for(idx=0, npleft=0; idx<TimeBinsBh.NActiveParticles; idx++)
+    {
+      i = TimeBinsBh.ActiveParticleList[idx];
+      if(BhP[i].Hsml <= 0)
+      {
+        mpi_printf("WARNING: BH %d has invalid Hsml=%g, reinitializing\n",
+                    i, BhP[i].Hsml);
+        // Use softening as fallback
+        BhP[i].Hsml = All.SofteningTable[P[BhP[i].PID].SofteningType];
+      }
+    }
+ 
   /* we will repeat the whole thing for those particles where we didn't find enough neighbours */
   do
     {
