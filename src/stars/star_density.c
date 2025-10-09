@@ -190,8 +190,6 @@ void star_density(void)
       Left[i] = Right[i] = 0;
       SP[i].DensityFlag = 1;
       StarNumNgb[i] = 0;
-        fprintf(stdout,"Hsml: %12.8e\n",SP[i].Hsml);
-        fflush(stdout);
       if(SP[i].Hsml == 0)
         SP[i].Hsml = cbrt((3.0*All.MeanVolume)/(4.0*M_PI));
     }
