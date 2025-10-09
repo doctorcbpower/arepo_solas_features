@@ -195,9 +195,9 @@ void sfr_create_star_particles(void)
             { 
 #ifdef STARS  
               //Check if we are overflowing the stars array
-              if(NumStars == MaxPartStars)
+              if(NumStars == All.MaxPartStars)
                 {
-                  MaxPartStars += (int)(1.5 * MaxPartStars + 1);
+                  All.MaxPartStars += (int)(1.5 * All.MaxPartStars + 1);
                   reallocate_memory_maxpartstars();
                 }
 #endif 
