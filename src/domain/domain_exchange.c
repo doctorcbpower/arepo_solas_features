@@ -106,8 +106,8 @@ void domain_resize_storage_bhs(int count_get_bhs)
     {
       All.MaxPartBhs = max_bhload / (1.0 - 2 * ALLOC_TOLERANCE);
       
-      if (All.MaxPartBhs < ALLOC_STARBH_ROOM)
-        All.MaxPartBhs = ALLOC_STARBH_ROOM;
+      if (All.MaxPartBhs < ALLOC_BH_ROOM)
+        All.MaxPartBhs = ALLOC_BH_ROOM;
       
       reallocate_memory_maxpartbhs();
     }
@@ -128,8 +128,8 @@ void domain_resize_storage_stars(int count_get_stars)
     {
       All.MaxPartStars = max_starload / (1.0 - 2 * ALLOC_TOLERANCE);
       
-      if(All.MaxPartStars < ALLOC_STARBH_ROOM)
-        All.MaxPartStars = ALLOC_STARBH_ROOM;
+      if(All.MaxPartStars < ALLOC_STAR_ROOM)
+        All.MaxPartStars = ALLOC_STAR_ROOM;
       
         reallocate_memory_maxpartstars();
     }

@@ -192,7 +192,17 @@ void sfr_create_star_particles(void)
           p_decide = get_random_number();
 
           if(p_decide < p / pall) /* ok, it is decided to consider star formation */
-            make_star(idx, i, prob, mass_of_star, &sum_mass_stars);
+            { 
+#ifdef STARS  
+              //Check if we are overflowing the stars array
+              if(NumStars == MaxPartStars)
+                {
+                  MaxPartStars += (int)(1.5 * MaxPartStars + 1);
+                  reallocate_memory_maxpartstars();
+                }
+#endif 
+              make_star(idx, i, prob, mass_of_star, &sum_mass_stars);
+            }
         }
     } /* end of main loop over active gas particles */
 

@@ -243,14 +243,14 @@ void read_ic(const char *fname, int readTypes)
           All.MaxPart    = max_load / (1.0 - 2 * ALLOC_TOLERANCE);
           All.MaxPartSph = max_sphload / (1.0 - 2 * ALLOC_TOLERANCE);
 #ifdef BLACKHOLES
-          if(max_bhload < ALLOC_STARBH_ROOM)
-            All.MaxPartBhs = ALLOC_STARBH_ROOM;
+          if(max_bhload < ALLOC_BH_ROOM)
+            All.MaxPartBhs = ALLOC_BH_ROOM;
           else
             All.MaxPartBhs  = max_bhload / (1.0 - 2 * ALLOC_TOLERANCE);
 #endif
 #ifdef STARS
-          if(max_starload < ALLOC_STARBH_ROOM)
-            All.MaxPartStars = ALLOC_STARBH_ROOM;
+          if(max_starload < ALLOC_STAR_ROOM)
+            All.MaxPartStars = ALLOC_STAR_ROOM;
           else
             All.MaxPartStars  = max_starload / (1.0 - 2 * ALLOC_TOLERANCE);
 #endif
