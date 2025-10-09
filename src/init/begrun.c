@@ -242,7 +242,7 @@ void begrun2(void)
   
     if(ThisTask == 0)
       CELibShowCurrentStatus();
-  #endif     
+#endif
 
 #if defined(USE_SFR) && defined(EEOS_SF)   /* For the default SF scheme in Arepo */
   sfr_init();

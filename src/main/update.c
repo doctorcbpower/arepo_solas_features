@@ -122,16 +122,16 @@ void update_SNII(void)
           //timebin_add_particle(&TimeBinsStar, i, -1, 0, 1);
 
           /* SNII feedback variables */
-          double elements[13] = {0,0,0,0,0,0,0,0,0,0,0,0,0};
+//          double elements[13] = {0,0,0,0,0,0,0,0,0,0,0,0,0};
 
           struct CELibStructFeedbackInput Input = 
             {
               .Mass = (PPS(i).Mass * All.UnitMass_in_g / SOLAR_MASS),                 
               .MassConversionFactor = 1, 
-              .Elements = elements,
+              .Elements = {0},
             };
             
-          Input.Metallicity=0.0004;
+          Input.Metallicity=All.ConstantMetallicityYield;
 
           struct CELibStructFeedbackOutput Output = 
             CELibGetFeedback(Input, CELibFeedbackType_SNII);

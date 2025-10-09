@@ -483,15 +483,18 @@ int init(void)
  * this the same as no advection!
  * */
 #ifdef METALS
-  for(i=0; i<NumGas; i++){
-    SphP[i].Metals = All.InitMetallicityinSolar * SOLAR_ABUNDANCE;
-}
+  for(i=0; i<NumGas; i++)
+  {
+      SphP[i].Metals = All.InitMetallicityinSolar * SOLAR_ABUNDANCE;
+  }
+      
 #endif /* ifdef METALS */
 
 #ifdef PASSIVE_SCALARS
   for(i = 0; i < NumGas; i++)
     {
       for(j = 0; j < PASSIVE_SCALARS; j++)
+        SphP[i].PScalars[j] = SphP[i].Metals;
         SphP[i].PConservedScalars[j] = SphP[i].PScalars[j] * P[i].Mass;
     }
 

@@ -991,7 +991,6 @@ struct CELibStructFeedbackOutput CELibGetSNIIFeedback(struct CELibStructFeedback
 
     struct CELibStructFeedbackOutput SNIIFeedback;
 
-
     if(Input.Metallicity <= CELibSNIIYieldsIntegrated[0].Metallicity){
         int TableID = 0;
         if(Input.noPopIII){

@@ -1323,7 +1323,10 @@ extern struct global_data_all_processes
 #ifdef METALS
 double InitMetallicityinSolar;
 #endif // METALS
-       
+    
+#if defined(METALS) && defined(USE_CELIB)
+double ConstantMetallicityYield;
+#endif  // defined(METALS) && defined(USE_CELIB)
 } All;
 
 /*****************************************************************************
@@ -1568,12 +1571,8 @@ extern struct sph_particle_data
   MyDouble MomentumKickVector[3];
 #endif
 
-/* NOTE: This is like an alias so that I can access this field without
- * calling it PScalars
- * */
 #ifdef METALS
-#define Metallicity PScalars[METALLICITY_INDEX]
-#define Metals PConservedScalars[METALLICITY_INDEX]
+#define Metals PScalars[METALLICITY_INDEX]
 #endif /* METALS */
        
 } * SphP,          /*!< holds SPH particle data on local processor */

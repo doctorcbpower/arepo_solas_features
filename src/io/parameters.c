@@ -535,6 +535,12 @@ void read_parameter_file(char *fname)
         id[nt++] = REAL;
 #endif
         
+#if defined(METALS) && defined(USE_CELIB)
+        strcpy(tag[nt], "ConstantMetallicityYield");
+        addr[nt] = &All.ConstantMetallicityYield;
+        id[nt++] = REAL;
+#endif
+        
 #if defined(STARS) || defined(BLACKHOLES)
       strcpy(tag[nt], "DesNgb");
       addr[nt] = &All.DesNgb;
