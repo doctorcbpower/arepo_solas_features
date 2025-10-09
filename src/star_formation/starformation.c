@@ -102,6 +102,24 @@ void sfr_create_star_particles(void)
   double rate_in_msunperyear;
   double sfrrate, totsfrrate;
 
+#ifdef STARS
+//Check if we are overflowing the stars array
+int need_realloc_local = 0;
+if (NumStars == All.MaxPartStars)
+    need_realloc_local = 1;
+
+//Determine if any mpi rank needs more memory 
+int need_realloc_global;
+MPI_Allreduce(&need_realloc_local, &need_realloc_global, 1, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
+
+if(need_realloc_global)
+  {
+    //Determine the new MaxPartStars
+    All.MaxPartStars = 1.25*All.MaxPartStars + 1;
+    reallocate_memory_maxpartstars();
+  }
+#endif
+
   stars_spawned = stars_converted = 0;
   sum_sm = sum_mass_stars = 0;
 
@@ -192,17 +210,7 @@ void sfr_create_star_particles(void)
           p_decide = get_random_number();
 
           if(p_decide < p / pall) /* ok, it is decided to consider star formation */
-            { 
-#ifdef STARS  
-              //Check if we are overflowing the stars array
-              if(NumStars == All.MaxPartStars)
-                {
-                  All.MaxPartStars += (int)(1.5 * All.MaxPartStars + 1);
-                  reallocate_memory_maxpartstars();
-                }
-#endif 
-              make_star(idx, i, prob, mass_of_star, &sum_mass_stars);
-            }
+            make_star(idx, i, prob, mass_of_star, &sum_mass_stars);
         }
     } /* end of main loop over active gas particles */
 
