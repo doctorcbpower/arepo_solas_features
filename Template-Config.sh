@@ -6,19 +6,22 @@
 
 #--------------------------------------- SOLAS additions
 
+
+#--------------------------------------- Feedback options
+#FEEDBACK_TESTING_RESTRICT_SNAPSHOTS  # Only dump snapshots after a feedback event
 #STARS
 #STAR_BY_STAR
 #WINDS
 #SUPERNOVAE
 #USE_CELIB              # Use the CELib libraries
 
-#--------------------------------------- Star Formation parameters
+#--------------------------------------- Star Formation options
 #EEOS_SF               # Default SF scheme in Arepo
 #AGORA_SF               # Agora based SF
 #JEANS_SF               # Jeans length based SF
 #JEANS_MASS_BASED       # Jeans mass based SF
 
-#--------------------------------------- Black Hole parameters
+#--------------------------------------- Black Hole options
 #BLACKHOLES
 #BURST_MODE
 #BONDI_ACCRETION

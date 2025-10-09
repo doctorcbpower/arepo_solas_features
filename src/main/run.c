@@ -179,10 +179,8 @@ void run(void)
 
 #endif
 
-#if !defined(STARS) && !defined(BLACKHOLES)
-          
+#ifndef FEEDBACK_TESTING_RESTRICT_SNAPSHOTS
           create_snapshot_if_desired();
-
 #endif
           if(All.Ti_Current >= TIMEBASE) /* we reached the final time */
             {
