@@ -1294,13 +1294,13 @@ extern struct global_data_all_processes
   double EnergyExchangeTot[6];
   int FeedbackFlag;
   /* for parameter file */
-  double DesNgb;
-  double DesDev;
   double FeedbackTime;
 #endif
 
 #ifdef BLACKHOLES
   /* for parameter file */
+  double BhDesNgb;
+  double BhDesDev;
   double JetFeedback;
   double Epsilon_r;
   double Epsilon_f;
@@ -1309,6 +1309,8 @@ extern struct global_data_all_processes
 
 #ifdef STARS
   /* for parameter file */
+  double StarDesNgb;
+  double StarDesDev;
   double WindVelocity;
   double Ftherm;
   double Fsn;

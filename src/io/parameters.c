@@ -542,20 +542,20 @@ void read_parameter_file(char *fname)
 #endif
         
 #if defined(STARS) || defined(BLACKHOLES)
-      strcpy(tag[nt], "DesNgb");
-      addr[nt] = &All.DesNgb;
-      id[nt++] = REAL;
-      
-      strcpy(tag[nt], "DesDev");
-      addr[nt] = &All.DesDev;
-      id[nt++] = REAL;
-
       strcpy(tag[nt], "FeedbackTime");
       addr[nt] = &All.FeedbackTime;
       id[nt++] = REAL;
 #endif
 
 #ifdef BLACKHOLES
+      strcpy(tag[nt], "BhDesNgb");
+      addr[nt] = &All.BhDesNgb;
+      id[nt++] = REAL;
+      
+      strcpy(tag[nt], "BhDesDev");
+      addr[nt] = &All.BhDesDev;
+      id[nt++] = REAL;
+
       strcpy(tag[nt], "JetFeedback");
       addr[nt] = &All.JetFeedback;
       id[nt++] = INT;
@@ -574,6 +574,14 @@ void read_parameter_file(char *fname)
 #endif
 
 #ifdef STARS
+      strcpy(tag[nt], "StarDesNgb");
+      addr[nt] = &All.StarDesNgb;
+      id[nt++] = REAL;
+      
+      strcpy(tag[nt], "StarDesDev");
+      addr[nt] = &All.StarDesDev;
+      id[nt++] = REAL;
+
       strcpy(tag[nt], "WindVelocity");
       addr[nt] = &All.WindVelocity;
       id[nt++] = REAL;

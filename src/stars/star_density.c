@@ -207,7 +207,7 @@ void star_density(void)
         {
           i = TimeBinsStar.ActiveParticleList[idx];
 
-          if(StarNumNgb[i] < (All.DesNgb - All.DesDev) || StarNumNgb[i] > (All.DesNgb + All.DesDev))
+          if(StarNumNgb[i] < (All.StarDesNgb - All.StarDesDev) || StarNumNgb[i] > (All.StarDesNgb + All.StarDesDev))
           {
                   /* need to redo this particle */
             npleft++;
@@ -223,7 +223,7 @@ void star_density(void)
                 }
               } 
 
-            if(StarNumNgb[i] < (All.DesNgb - All.DesDev))
+            if(StarNumNgb[i] < (All.StarDesNgb - All.StarDesDev))
               Left[i] = dmax(SP[i].Hsml, Left[i]);
             else
               {

@@ -255,7 +255,7 @@ void bh_density(void)
         {
           i = TimeBinsBh.ActiveParticleList[idx];
 
-          if(BhNumNgb[i] < (All.DesNgb - All.DesDev) || BhNumNgb[i] > (All.DesNgb + All.DesDev))
+          if(BhNumNgb[i] < (All.BhDesNgb - All.BhDesDev) || BhNumNgb[i] > (All.BhDesNgb + All.BhDesDev))
           {
                   /* need to redo this particle */
             npleft++;
@@ -271,7 +271,7 @@ void bh_density(void)
                 }
               } 
 
-            if(BhNumNgb[i] < (All.DesNgb - All.DesDev))
+            if(BhNumNgb[i] < (All.BhDesNgb - All.BhDesDev))
               Left[i] = dmax(BhP[i].Hsml, Left[i]);
             else
               {
