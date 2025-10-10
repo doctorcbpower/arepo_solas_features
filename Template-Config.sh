@@ -42,6 +42,7 @@
 #--------------------------------------- Cooling parameters
 #USE_GRACKLE
 #GRACKLE_CHEMISTRY=0 # Curretly only grackle mode=0 (lookup tables) with no chemistry network is supported
+#NOUVBACKGROUND 
 
 #--------------------------------------- Metal parameters
 #METALS # Advect all metals, ie metal mass fraction, as a PASSIVE_SCALARS.

@@ -24,6 +24,7 @@
  *                int init(void)
  *                void check_omega(void)
  *                void setup_smoothinglengths(void)
+ *                void setup_smoothinglengths_particles(void) *
  *                void test_id_uniqueness(void)
  *                void calculate_maxid(void)
  *                int compare_IDs(const void *a, const void *b)
@@ -32,6 +33,7 @@
  *
  * - DD.MM.YYYY Description
  * - 04.05.2018 Prepared file for public release -- Rainer Weinberger
+ *  - 10/10/2025 Added functionality to compute initial smoothing lengths for stars and black holes - Chris Power
  */
 
 #include <gsl/gsl_sf_gamma.h>
@@ -484,20 +486,13 @@ int init(void)
  * */
 #ifdef METALS
   for(i=0; i<NumGas; i++)
-  {
       SphP[i].Metals = All.InitMetallicityinSolar * SOLAR_ABUNDANCE;
-  }
-      
 #endif /* ifdef METALS */
 
 #ifdef PASSIVE_SCALARS
   for(i = 0; i < NumGas; i++)
-    {
       for(j = 0; j < PASSIVE_SCALARS; j++)
-        SphP[i].PScalars[j] = SphP[i].Metals;
         SphP[i].PConservedScalars[j] = SphP[i].PScalars[j] * P[i].Mass;
-    }
-
 #endif /* #ifdef PASSIVE_SCALARS */
 
   if(RestartFlag == 17)
@@ -795,7 +790,7 @@ void setup_smoothinglengths_particles(void)
       if(no < 0)
         terminate("i=%d no=%d\n", i, no);
 
-      while(10 * All.DesNumNgb * P[i].Mass > Nodes[no].u.d.mass)
+      while(10 * All.DesNgb * P[i].Mass > Nodes[no].u.d.mass)
         {
           p = Nodes[no].u.d.father;
 
@@ -805,16 +800,15 @@ void setup_smoothinglengths_particles(void)
           no = p;
         }
 #ifndef TWODIMS
-      Hsml = pow(3.0 / (4 * M_PI) * All.DesNumNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 3) * Nodes[no].len;
+      Hsml = pow(3.0 / (4 * M_PI) * All.DesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 3) * Nodes[no].len;
 #else  /* #ifndef TWODIMS */
-      Hsml = pow(1.0 / (M_PI)*All.DesNumNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
+      Hsml = pow(1.0 / (M_PI)*All.DesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
 #endif /* #ifndef TWODIMS #else */
 
 #ifdef STARS
       if(P[i].Type == 4) 
       {
-        SP[i].Hsml = Hsml;
-        TimeBinsStar.ActiveParticleList[TimeBinsStar.NActiveParticles] = i;
+        TimeBinsStar.ActiveParticleList[TimeBinsStar.NActiveParticles] = TimeBinsStar.NActiveParticles;
         SP[TimeBinsStar.NActiveParticles].Hsml = Hsml;
         TimeBinsStar.NActiveParticles++;  
       }
@@ -822,7 +816,7 @@ void setup_smoothinglengths_particles(void)
 #ifdef BLACKHOLES
       if(P[i].Type == 5)
       {
-        TimeBinsBh.ActiveParticleList[TimeBinsBh.NActiveParticles] = i;
+        TimeBinsBh.ActiveParticleList[TimeBinsBh.NActiveParticles] = TimeBinsBh.NActiveParticles;
         BhP[TimeBinsBh.NActiveParticles].Hsml = Hsml;
         TimeBinsBh.NActiveParticles++;  
       }
@@ -835,6 +829,14 @@ void setup_smoothinglengths_particles(void)
   myfree(Tree_Points);
   force_treefree();
 
+#ifdef STARS
+  star_density();
+#endif
+
+#ifdef BLACKHOLES
+  bh_density();
+#endif
+    
   for(i = 0; i < NumPart; i++)
     P[i].Mass = save_masses[i];
 

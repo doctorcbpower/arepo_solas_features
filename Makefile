@@ -62,7 +62,7 @@ $(info BREW: $(BREW))
 
 # compiler and its optimization options
 CC        =  mpicc   # sets the C-compiler
-OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
+OPTIMIZE  =  -std=c11 -ggdb -g -O0 -fno-omit-frame-pointer -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
 
 MPICH_LIB = #-lmpi
 GSL_INCL  = -I$(shell $(BREW) --prefix gsl)/include

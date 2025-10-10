@@ -52,6 +52,7 @@ DEBUG # enables core-dumps
 COOLING                          # Simple primordial cooling
 USE_GRACKLE			 # Use Grackle library for cooling
 GRACKLE_CHEMISTRY=0
+NOUVBACKGROUND			 # Switches off UV background
 USE_SFR                          # Activate star formation
 AGORA_SF			 # AGORA star formation scheme
 USE_CELIB
@@ -59,5 +60,6 @@ STARS
 PASSIVE_SCALARS=1
 METALS
 
-#BLACKHOLES
-#BONDI_ACCRETION
+#REFINEMENT_AROUND_BH
+BLACKHOLES
+BONDI_ACCRETION

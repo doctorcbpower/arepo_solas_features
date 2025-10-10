@@ -214,7 +214,7 @@ int main(int argc, char **argv)
 #else  /* #ifdef READ_DM_AS_GAS */
       read_ic(fname, (RestartFlag == 14) ? 0x01 : LOAD_TYPES);
 #endif /* #ifdef READ_DM_AS_GAS #else */
-
+        
       /* If we are supposed to just convert the file, write and exit here. */
       if(RestartFlag == 6)
         {

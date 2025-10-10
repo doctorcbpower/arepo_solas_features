@@ -229,8 +229,10 @@ void bh_density(void)
     }
 
   mpi_printf("BH_DENSITY: Start density and neighbour search for %d black holes.\n", NumBhs);
+
   generic_set_MaxNexport();
-  for(idx=0, npleft=0; idx<TimeBinsBh.NActiveParticles; idx++)
+
+    for(idx=0; idx<TimeBinsBh.NActiveParticles; idx++)
     {
       i = TimeBinsBh.ActiveParticleList[idx];
       if(BhP[i].Hsml <= 0)
@@ -253,7 +255,7 @@ void bh_density(void)
         {
           i = TimeBinsBh.ActiveParticleList[idx];
 
-          if(BhP[i].NgbMass < (All.DesNgb - All.DesDev) || BhP[i].NgbMass > (All.DesNgb + All.DesDev))
+          if(BhNumNgb[i] < (All.DesNgb - All.DesDev) || BhNumNgb[i] > (All.DesNgb + All.DesDev))
           {
                   /* need to redo this particle */
             npleft++;
@@ -269,7 +271,7 @@ void bh_density(void)
                 }
               } 
 
-            if(BhP[i].NgbMass < (All.DesNgb - All.DesDev))
+            if(BhNumNgb[i] < (All.DesNgb - All.DesDev))
               Left[i] = dmax(BhP[i].Hsml, Left[i]);
             else
               {
@@ -303,7 +305,7 @@ void bh_density(void)
         else
              BhP[i].DensityFlag = -1; /* Mark as inactive */ 
         }
-
+        
       sumup_large_ints(1, &npleft, &ntot);
 
       t1 = second();

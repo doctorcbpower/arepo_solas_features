@@ -134,7 +134,7 @@ void reconstruct_timebins(void)
   make_list_of_active_particles();
 
   TIMER_STOP(CPU_TIMELINE);
-}
+} // reconstruct_timebins()
 
 /*! \brief This function finds the next synchronization point of the system.
  *         (i.e. the earliest point of time any of the particles needs a force
