@@ -494,7 +494,6 @@ int init(void)
   for(i = 0; i < NumGas; i++)
     {
       for(j = 0; j < PASSIVE_SCALARS; j++)
-        SphP[i].PScalars[j] = SphP[i].Metals;
         SphP[i].PConservedScalars[j] = SphP[i].PScalars[j] * P[i].Mass;
     }
 
