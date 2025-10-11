@@ -7,8 +7,9 @@
 
 
 #--------------------------------------- Basic operation mode of code
-ADDBACKGROUNDGRID=16                     # Re-grid hydrodynamics quantities on a Oct-tree AMR grid. This does not perform a simulation.
+ADDBACKGROUNDGRID=32                    # Re-grid hydrodynamics quantities on a Oct-tree AMR grid. This does not perform a simulation.
 
+MESHRELAX
 
 #--------------------------------------- Mesh motion and regularization
 REGULARIZE_MESH_FACE_ANGLE               # Use maximum face angle as roundness criterion in mesh regularization

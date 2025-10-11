@@ -57,6 +57,7 @@ USE_SFR                          # Activate star formation
 AGORA_SF			 # AGORA star formation scheme
 USE_CELIB
 STARS
+SUPERNOVAE
 PASSIVE_SCALARS=1
 METALS
 

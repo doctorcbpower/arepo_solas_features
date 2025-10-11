@@ -123,15 +123,26 @@ void update_SNII(void)
 
           /* SNII feedback variables */
 //          double elements[13] = {0,0,0,0,0,0,0,0,0,0,0,0,0};
-
-          struct CELibStructFeedbackInput Input = 
-            {
-              .Mass = (PPS(i).Mass * All.UnitMass_in_g / SOLAR_MASS),                 
-              .MassConversionFactor = 1, 
-              .Elements = {0},
-            };
+        double elements[CELibYield_Number];
+        for (int j = 0; j < CELibYield_Number; j++)
+            elements[j] = 0.0;
             
-          Input.Metallicity=All.ConstantMetallicityYield;
+        struct CELibStructFeedbackInput Input = {
+            .Mass = (PPS(i).Mass * All.UnitMass_in_g / SOLAR_MASS),
+            .MassConversionFactor = 1,
+            .Elements = elements,
+            .Metallicity = All.ConstantMetallicityYield,
+        };
+
+//          struct CELibStructFeedbackInput Input =
+//            {
+//              .Mass = (PPS(i).Mass * All.UnitMass_in_g / SOLAR_MASS),                 
+//              .MassConversionFactor = 1, 
+//              .Elements = {0},
+//              .Metallicity=All.ConstantMetallicityYield,
+//            };
+            
+//          Input.Metallicity=All.ConstantMetallicityYield;
 
           struct CELibStructFeedbackOutput Output = 
             CELibGetFeedback(Input, CELibFeedbackType_SNII);

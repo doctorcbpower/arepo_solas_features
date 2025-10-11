@@ -755,7 +755,9 @@ void setup_smoothinglengths(void)
 void setup_smoothinglengths_particles(void)
 {
   int i, no, p;
-  double Hsml;
+  int DesNgb;    /* How many neighbours within Hsml?*/
+  double Hsml;   /* Smoothing length */
+    
   double *save_masses = mymalloc("save_masses", NumPart * sizeof(double));
 
   for(i = 0; i < NumPart; i++)
@@ -785,12 +787,22 @@ void setup_smoothinglengths_particles(void)
   for(i = 0; i < NumPart; i++)
     {
       if (P[i].Type != 4 && P[i].Type !=5) continue; /* only stars and BH */
+        
+      DesNgb=All.DesNumNgb;    /* Assumes as default in case STARS/BLACKHOLES not defined*/
+
+#ifdef STARS
+      if (P[i].Type==4) DesNgb=All.StarDesNgb;
+#endif
+#ifdef BLACKHOLES
+      if (P[i].Type==5) DesNgb=All.BhDesNgb;
+#endif
+
       no = Father[i];
 
       if(no < 0)
         terminate("i=%d no=%d\n", i, no);
 
-      while(10 * All.DesNgb * P[i].Mass > Nodes[no].u.d.mass)
+      while(10 * DesNgb * P[i].Mass > Nodes[no].u.d.mass)
         {
           p = Nodes[no].u.d.father;
 
@@ -799,15 +811,15 @@ void setup_smoothinglengths_particles(void)
 
           no = p;
         }
-#ifndef TWODIMS
-      Hsml = pow(3.0 / (4 * M_PI) * All.DesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 3) * Nodes[no].len;
-#else  /* #ifndef TWODIMS */
-      Hsml = pow(1.0 / (M_PI)*All.DesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
-#endif /* #ifndef TWODIMS #else */
 
 #ifdef STARS
       if(P[i].Type == 4) 
       {
+#ifndef TWODIMS
+        Hsml = pow(3.0 / (4 * M_PI) * All.StarDesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 3) * Nodes[no].len;
+#else  /* #ifndef TWODIMS */
+        Hsml = pow(1.0 / (M_PI)*All.StarDesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
+#endif /* #ifndef TWODIMS #else */
         TimeBinsStar.ActiveParticleList[TimeBinsStar.NActiveParticles] = TimeBinsStar.NActiveParticles;
         SP[TimeBinsStar.NActiveParticles].Hsml = Hsml;
         TimeBinsStar.NActiveParticles++;  
@@ -816,6 +828,11 @@ void setup_smoothinglengths_particles(void)
 #ifdef BLACKHOLES
       if(P[i].Type == 5)
       {
+#ifndef TWODIMS
+        Hsml = pow(3.0 / (4 * M_PI) * All.BhDesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 3) * Nodes[no].len;
+#else  /* #ifndef TWODIMS */
+        Hsml = pow(1.0 / (M_PI)*All.BhDesNgb * P[i].Mass / Nodes[no].u.d.mass, 1.0 / 2) * Nodes[no].len;
+#endif /* #ifndef TWODIMS #else */
         TimeBinsBh.ActiveParticleList[TimeBinsBh.NActiveParticles] = TimeBinsBh.NActiveParticles;
         BhP[TimeBinsBh.NActiveParticles].Hsml = Hsml;
         TimeBinsBh.NActiveParticles++;  
