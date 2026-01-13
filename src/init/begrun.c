@@ -233,7 +233,7 @@ void begrun2(void)
   if(RestartFlag > 2)
     open_logfiles();
 
-  #ifdef USE_CELIB
+#ifdef USE_CELIB
     /* celib init */
     if(ThisTask == 0)
       CELibShowVersion();
@@ -274,6 +274,10 @@ void begrun2(void)
 #ifdef REDUCE_FLUSH
   All.FlushLast = CPUThisRun;
 #endif /* #ifdef REDUCE_FLUSH */
+
+#ifdef FIND_HALOS
+  All.NextTimeOfHaloFinding=All.TimeOfFirstHaloFinding;
+#endif
 
 #if defined(FORCETEST) && defined(FORCETEST_TESTFORCELAW)
   gravity_forcetest_testforcelaw();

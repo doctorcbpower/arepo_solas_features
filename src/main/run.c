@@ -54,6 +54,8 @@
 #include "../domain/domain.h"
 #include "../mesh/voronoi/voronoi.h"
 
+#include "../fof/fof.h"
+
 static void do_second_order_source_terms_first_half(void);
 static void do_second_order_source_terms_second_half(void);
 static void create_end_file(void);
@@ -392,6 +394,15 @@ void calculate_non_standard_physics_with_valid_gravity_tree_always(void) {}
  */
 void calculate_non_standard_physics_prior_mesh_construction(void)
 {
+#ifdef FIND_HALOS
+    if(All.Time>=All.NextTimeOfHaloFinding)
+    {
+        fof_seeding();
+        mpi_printf("FOF_SEEDING: Found %d FOF groups at %g...\n",TotNgroups,All.Time);
+        All.NextTimeOfHaloFinding*=All.TimeBetweenHaloFinding;
+    }
+#endif
+    
 #if defined(COOLING) && defined(USE_SFR)
   sfr_create_star_particles();
 #endif /* #if defined(COOLING) && defined(USE_SFR) */

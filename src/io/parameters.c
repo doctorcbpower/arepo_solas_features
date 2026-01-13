@@ -640,6 +640,17 @@ void read_parameter_file(char *fname)
       id[nt++] = REAL;
 #endif
 #endif
+        
+#ifdef FIND_HALOS
+      strcpy(tag[nt], "TimeOfFirstHaloFinding");
+      addr[nt] = &All.TimeOfFirstHaloFinding;
+      id[nt++] = REAL;
+
+      strcpy(tag[nt], "TimeBetweenHaloFinding");
+      addr[nt] = &All.TimeBetweenHaloFinding;
+      id[nt++] = REAL;
+#endif
+
 
       if((fd = fopen(fname, "r")))
         {
