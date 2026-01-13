@@ -75,6 +75,11 @@ double get_jeans_length(int i);
 double get_jeans_mass(int i);
 #endif
 
+#if defined(FIND_HALOS) && defined(FOF)
+void fof_seeding(void);
+double fof_seeding_get_time_increment(void);
+#endif
+
 void sfr_init();
 void sfr_create_star_particles(void);
 void ngb_finish_rangebounds_update(int nchanged, int *nodelist);

@@ -998,6 +998,12 @@ extern struct global_data_all_processes
   double ErrTolThetaSubfind;
 #endif /* #ifdef SUBFIND */
 
+#ifdef FIND_HALOS
+  double TimeOfFirstHaloFinding;
+  double NextTimeOfHaloFinding;
+  double TimeBetweenHaloFinding;
+#endif
+    
   double TotCountReducedFluxes;
   double TotCountFluxes;
 
