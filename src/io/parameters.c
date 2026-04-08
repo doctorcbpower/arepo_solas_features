@@ -641,7 +641,7 @@ void read_parameter_file(char *fname)
 #endif
 #endif
         
-#ifdef FIND_HALOS
+#if defined(HALO_SEEDING) && defined(FOF)
       strcpy(tag[nt], "TimeOfFirstHaloFinding");
       addr[nt] = &All.TimeOfFirstHaloFinding;
       id[nt++] = REAL;
@@ -649,6 +649,16 @@ void read_parameter_file(char *fname)
       strcpy(tag[nt], "TimeBetweenHaloFinding");
       addr[nt] = &All.TimeBetweenHaloFinding;
       id[nt++] = REAL;
+  
+#ifdef BLACKHOLE_SEEDING
+      strcpy(tag[nt], "BlackHoleSeedMass");
+      addr[nt] = &All.BlackHoleSeedMass;
+      id[nt++] = REAL;
+
+      strcpy(tag[nt], "MinHaloMassForBlackHoleSeeding");
+      addr[nt] = &All.MinHaloMassForBlackHoleSeeding;
+      id[nt++] = REAL;          
+#endif
 #endif
 
 

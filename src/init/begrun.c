@@ -275,7 +275,7 @@ void begrun2(void)
   All.FlushLast = CPUThisRun;
 #endif /* #ifdef REDUCE_FLUSH */
 
-#ifdef FIND_HALOS
+#ifdef HALO_SEEDING
   All.NextTimeOfHaloFinding=All.TimeOfFirstHaloFinding;
 #endif
 

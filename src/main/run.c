@@ -394,7 +394,7 @@ void calculate_non_standard_physics_with_valid_gravity_tree_always(void) {}
  */
 void calculate_non_standard_physics_prior_mesh_construction(void)
 {
-#ifdef FIND_HALOS
+#ifdef HALO_SEEDING
     if(All.Time>=All.NextTimeOfHaloFinding)
     {
         fof_seeding();

@@ -75,9 +75,11 @@ double get_jeans_length(int i);
 double get_jeans_mass(int i);
 #endif
 
-#if defined(FIND_HALOS) && defined(FOF)
+#if defined(HALO_SEEDING) && defined(FOF)
+#ifdef BLACKHOLE_SEEDING
 void fof_seeding(void);
 double fof_seeding_get_time_increment(void);
+#endif
 #endif
 
 void sfr_init();

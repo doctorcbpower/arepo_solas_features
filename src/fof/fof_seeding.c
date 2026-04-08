@@ -46,7 +46,7 @@
 #include "../main/proto.h"
 #include "../subfind/subfind.h"
 
-#if defined(FIND_HALOS) && defined(FOF)
+#if defined(HALO_SEEDING) && defined(FOF)
 
 static MyIDType *MinID;
 static int *Head, *Len, *Next, *Tail, *MinIDTask;

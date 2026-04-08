@@ -277,7 +277,7 @@ OBJS    += fof/fof.o \
            fof/fof_vars.o
 INCL    += fof/fof.h
 SUBDIRS += fof
-ifeq (FIND_HALOS,$(findstring FIND_HALOS,$(CONFIGVARS)))
+ifeq (HALO_SEEDING,$(findstring HALO_SEEDING,$(CONFIGVARS)))
 OBJS    += fof/fof_seeding.o 
 endif
 endif
