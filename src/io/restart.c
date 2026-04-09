@@ -1285,6 +1285,20 @@ static void contents_restart_file(int modus)
   byten(TimeBinsStar.LastInTimeBin, TIMEBINS * sizeof(int), modus);
 #endif
 
+#if defined(HALO_SEEDING) && defined(FOF)
+  in(&All.NSeededHalos, modus);
+
+  if(modus == MODUS_READ)
+    {
+      All.MaxSeededHalos = All.NSeededHalos;
+      SeededHaloIDs = mymalloc("SeededHaloIDs",
+                               imax(1, All.NSeededHalos) * sizeof(MyIDType));
+    }
+
+  if(All.NSeededHalos > 0)
+    byten(SeededHaloIDs, All.NSeededHalos * sizeof(MyIDType), modus);
+#endif
+
   polling(modus);
 
   /* now store relevant data for tree */

@@ -314,6 +314,12 @@ INCL    += blackholes/bh_proto.h
 SUBDIRS += blackholes
 endif
 
+ifeq (BLACKHOLE_SEEDING,$(findstring BLACKHOLE_SEEDING,$(CONFIGVARS)))
+OBJS    += blackholes/bh_seed.o
+INCL    += blackholes/bh_proto.h
+SUBDIRS += blackholes
+endif
+
 ifeq (STARS,$(findstring STARS,$(CONFIGVARS)))
 OBJS    += stars/star_density.o \
            stars/star_feedback.o 

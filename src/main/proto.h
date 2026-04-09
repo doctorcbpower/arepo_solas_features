@@ -76,10 +76,10 @@ double get_jeans_mass(int i);
 #endif
 
 #if defined(HALO_SEEDING) && defined(FOF)
-#ifdef BLACKHOLE_SEEDING
 void fof_seeding(void);
 double fof_seeding_get_time_increment(void);
-#endif
+void mark_halo_seeded(MyIDType);
+int is_halo_seeded(MyIDType);
 #endif
 
 void sfr_init();

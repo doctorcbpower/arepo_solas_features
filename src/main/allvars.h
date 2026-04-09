@@ -747,6 +747,10 @@ extern int NumBhs;
 extern int NumStars;
 #endif
 
+#if defined(HALO_SEEDING) && defined(FOF)
+extern MyIDType *SeededHaloIDs;
+#endif
+
 extern gsl_rng *random_generator;     /*!< a random number generator  */
 extern gsl_rng *random_generator_aux; /*!< an auxialiary random number generator for use if one doesn't want to influence the main
                                          code's random numbers  */
@@ -1002,6 +1006,8 @@ extern struct global_data_all_processes
   double TimeOfFirstHaloFinding;
   double NextTimeOfHaloFinding;
   double TimeBetweenHaloFinding;
+  int NSeededHalos;
+  int MaxSeededHalos;
 #ifdef BLACKHOLE_SEEDING
   double BlackHoleSeedMass;
   double MinHaloMassForBlackHoleSeeding;

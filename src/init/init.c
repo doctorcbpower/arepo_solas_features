@@ -400,6 +400,15 @@ int init(void)
   /* will build tree */
   ngb_treeallocate();
   ngb_treebuild(NumGas);
+
+#if defined(HALO_SEEDING) && defined(FOF)
+    if (RestartFlag == 0) {
+  /* Fresh start: no halos seeded yet */
+    All.NSeededHalos   = 0;
+    All.MaxSeededHalos = 0;
+    SeededHaloIDs      = NULL;
+    }
+#endif
  
   if(RestartFlag == 3)
     {

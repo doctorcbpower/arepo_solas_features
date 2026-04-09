@@ -48,6 +48,36 @@
 
 #if defined(HALO_SEEDING) && defined(FOF)
 
+int is_halo_seeded(MyIDType minid)
+{
+    // binary search
+    int lo = 0, hi = All.NSeededHalos - 1;
+    while(lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if(SeededHaloIDs[mid] == minid) return 1;
+        else if(SeededHaloIDs[mid] < minid) lo = mid + 1;
+        else hi = mid - 1;
+    }
+    return 0;
+}
+
+void mark_halo_seeded(MyIDType minid)
+{
+    // Grow array if needed
+    if(All.NSeededHalos == All.MaxSeededHalos) {
+        All.MaxSeededHalos = 2 * All.MaxSeededHalos + 64;
+        SeededHaloIDs = myrealloc(SeededHaloIDs, All.MaxSeededHalos * sizeof(MyIDType));
+    }
+    // Insert in sorted position
+    int pos = All.NSeededHalos;
+    while(pos > 0 && SeededHaloIDs[pos-1] > minid)  {
+        SeededHaloIDs[pos] = SeededHaloIDs[pos-1];
+        pos--;
+    }
+    SeededHaloIDs[pos] = minid;
+    All.NSeededHalos++;
+}
+
 static MyIDType *MinID;
 static int *Head, *Len, *Next, *Tail, *MinIDTask;
 
@@ -257,6 +287,27 @@ void fof_seeding(void)
 //
   mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 //
+#ifdef BLACKHOLE_SEEDING
+  #ifndef BLACKHOLES
+    #define BLACKHOLES // Temporary safeguard for the header
+  #endif
+  #include "../blackholes/bh_proto.h"
+
+  for(int n=0; n<Ngroups;n++)
+      fprintf(stderr,"Group mass[%d]: %d (ThisTask:%d) \n",n,Group[n].Len,ThisTask);
+
+    for(int n = 0; n < Ngroups; n++)
+    {
+      if(Group[n].Mass < All.MinHaloMassForBlackHoleSeeding)
+        continue;
+      if(is_halo_seeded(Group[n].MinID))
+        continue;
+      seed_black_hole_in_group(n);
+      mark_halo_seeded(Group[n].MinID);
+
+  }
+#endif  
+
   myfree_movable(FOF_GList);
   myfree_movable(FOF_PList);
 
@@ -278,10 +329,6 @@ void fof_seeding(void)
   TIMER_START(CPU_FOF);
 //#endif /* #ifdef SUBFIND #else */
 
-  myfree_movable(Group);
-
-  mpi_printf("FOF_SEEDING: All FOF related work finished.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
-
   TIMER_STOP(CPU_FOF);
   TIMER_START(CPU_SNAPSHOT);
 
@@ -298,9 +345,9 @@ void fof_seeding(void)
 
   TIMER_STOP(CPU_FOF);
     
-    for(int n=0; n<Ngroups;n++)
-        fprintf(stderr,"Group mass[%d]: %d (ThisTask:%d) \n",n,Group[n].Len,ThisTask);
-}
+  myfree_movable(Group);
+
+  mpi_printf("FOF_SEEDING: All FOF related work finished.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));}
 
 /*! \brief Calculate dynamical time at a given epoch.
  *
