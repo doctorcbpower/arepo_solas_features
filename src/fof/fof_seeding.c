@@ -110,10 +110,6 @@ void fof_seeding(void)
 
   mpi_printf("FOF_SEEDING: Begin to compute FoF group catalogue...  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 
-/* Only free mesh if it was actually constructed this step */
-  if(TimeBinsHydro.GlobalNActiveParticles > 0)
-    free_mesh();
-
   ngb_treefree();
 
   domain_free();

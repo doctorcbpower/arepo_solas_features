@@ -102,6 +102,27 @@ HWLOC_INCL=
 endif
 # end of Linux
 
+#Ngarrgu Tindebeek
+ifeq ($(SYSTYPE),"NT")
+# compiler and its optimization options
+CC        =  mpicc
+OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
+
+MPICH_INCL=
+MPICH_LIB = -lmpi
+GSL_INCL  = -I$(EBROOTGSL)/include
+GSL_LIB   = -L$(EBROOTGSL)/lib -lgsl -lgslcblas
+HWLOC_LIB =
+
+# libraries that are included on demand, depending on Config.sh options
+FFTW_INCL = -I$(EBROOTFFTW)/include
+FFTW_LIBS = -L$(EBROOTFFTW)/lib
+HDF5_INCL = -I$(EBROOTHDF5)/include -DH5_USE_16_API
+HDF5_LIB  = -L$(EBROOTHDF5)/lib -lhdf5 -lz
+HWLOC_INCL=
+endif
+# end of NT
+
 ifndef LINKER
 LINKER = $(CC)
 endif
