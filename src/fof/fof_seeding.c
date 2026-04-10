@@ -48,7 +48,14 @@
 
 #if defined(HALO_SEEDING) && defined(FOF)
 
-int is_halo_seeded(MyIDType minid)
+#ifdef BLACKHOLE_SEEDING
+  #ifndef BLACKHOLES
+    #define BLACKHOLES // Temporary safeguard for the header
+  #endif
+  #include "../blackholes/bh_proto.h"
+#endif
+
+  int is_halo_seeded(MyIDType minid)
 {
     // binary search
     int lo = 0, hi = All.NSeededHalos - 1;
@@ -290,10 +297,6 @@ void fof_seeding(void)
   mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 //
 #ifdef BLACKHOLE_SEEDING
-  #ifndef BLACKHOLES
-    #define BLACKHOLES // Temporary safeguard for the header
-  #endif
-  #include "../blackholes/bh_proto.h"
 
   for(int n=0; n<Ngroups;n++)
       fprintf(stderr,"Group mass[%d]: %d (ThisTask:%d) \n",n,Group[n].Len,ThisTask);
@@ -322,35 +325,14 @@ void fof_seeding(void)
 //#else  /* #ifdef SUBFIND */
 //**  Nsubgroups    = 0;
 //**  TotNsubgroups = 0;
-  TIMER_STOP(CPU_FOF);
-  TIMER_START(CPU_SNAPSHOT);
 
-//  fof_save_groups(num);
-
-  TIMER_STOP(CPU_SNAPSHOT);
-  TIMER_START(CPU_FOF);
-//#endif /* #ifdef SUBFIND #else */
+  myfree_movable(Group);   
+  myfree(PS);              
 
   TIMER_STOP(CPU_FOF);
-  TIMER_START(CPU_SNAPSHOT);
 
-  /* now distribute the particles into output order */
-//  t0 = second();
-//  fof_prepare_output_order();
-//  fof_subfind_exchange(MPI_COMM_WORLD); /* distribute particles such that FOF groups will appear in coherent way in snapshot files */
-//  t1 = second();
-//  mpi_printf("FOF_SEEDING: preparing output order of particles took %g sec\n", timediff(t0, t1));
-//
-  TIMER_STOP(CPU_SNAPSHOT);
-  TIMER_START(CPU_FOF);
-  myfree(PS);
-
-  TIMER_STOP(CPU_FOF);
-    
-  myfree_movable(Group);
-
-  mpi_printf("FOF_SEEDING: All FOF related work finished.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));}
-
+  mpi_printf("FOF_SEEDING: All FOF related work finished...\n");
+}
 /*! \brief Calculate dynamical time at a given epoch.
  *
  *  \return Increment in expansion factor
