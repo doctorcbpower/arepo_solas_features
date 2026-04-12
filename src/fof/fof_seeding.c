@@ -266,36 +266,31 @@ void fof_seeding(void)
   mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 //
 #ifdef BLACKHOLE_SEEDING
-
-  for(int n=0; n<Ngroups;n++)
-      fprintf(stderr,"Group mass[%d]: %d (ThisTask:%d) \n",n,Group[n].Len,ThisTask);
-
-  int local_bhs_seeded = 0;
-
+  /* Collect groups needing seeding on this task */
+  int n_to_seed = 0;
+  int seed_list[1024]; /* adjust size as needed */
+  
   for(int n = 0; n < Ngroups; n++)
-  {
-    if(Group[n].Mass < All.MinHaloMassForBlackHoleSeeding)
-      continue;
-    if(is_halo_seeded(Group[n].MinID))
-      continue;
-    seed_black_hole_in_group(n);
-    mark_halo_seeded(Group[n].MinID);
-  }
-
-  /* Synchronise global counts across all tasks */
-  int total_bhs_seeded = 0;
-  MPI_Allreduce(&local_bhs_seeded, &total_bhs_seeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-  if(total_bhs_seeded > 0)
     {
-      All.TotNumPart += total_bhs_seeded;
-#ifdef BLACKHOLES
-      All.TotNumBhs  += total_bhs_seeded;
-#endif
-      /* Synchronise MaxID — winning tasks incremented it, others didn't */
-      MyIDType maxid_local = All.MaxID;
-      MPI_Allreduce(&maxid_local, &All.MaxID, 1,
-                    MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+      if(Group[n].Mass < All.MinHaloMassForBlackHoleSeeding) continue;
+      if(is_halo_seeded(Group[n].MinID)) continue;
+      seed_list[n_to_seed++] = n;
     }
+
+  /* Find global maximum number of groups to seed across all tasks */
+  int max_to_seed;
+  MPI_Allreduce(&n_to_seed, &max_to_seed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+  /* All tasks loop the same number of times - pad with -1 on tasks with fewer */
+  int local_bhs_seeded = 0;
+  for(int s = 0; s < max_to_seed; s++)
+    {
+      int grp = (s < n_to_seed) ? seed_list[s] : -1;
+      seed_black_hole_in_group(grp, &local_bhs_seeded);
+      if(grp >= 0)
+        mark_halo_seeded(Group[grp].MinID);
+    }
+
 #endif  
   fof_prepare_output_order();
   fof_subfind_exchange(MPI_COMM_WORLD);

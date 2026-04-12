@@ -12,9 +12,6 @@
 
 #include "../fof/fof.h"
 
-// #ifdef BLACKHOLES
-// #include "../blackholes/bh.h"
-
 /*! \brief Spawn a black hole particle from the densest gas cell in a FOF group.
  *
  *  Finds the densest gas cell belonging to this group across all MPI tasks,
@@ -25,36 +22,38 @@
  */
 
 #ifdef BLACKHOLE_SEEDING
-void seed_black_hole_in_group(int grp_index)
+void seed_black_hole_in_group(int grp_index, int *n_seeded)
 {
-  MyIDType target_minid = Group[grp_index].MinID;
-
-  /* --- Phase 1: find the densest local gas cell in this group --- */
+  /* grp_index == -1 means this task has no group to seed but must
+   * still participate in the MPI_Allreduce collective */
+  
   double local_max_density = -1.0;
   int    local_best_index  = -1;
 
-  for(int i = 0; i < NumPart; i++)
+  if(grp_index >= 0)
     {
-      if(P[i].Type != 0)           continue;   /* gas only */
-      if(P[i].Mass == 0 && P[i].ID == 0) continue;   /* skip dead cells */
-      if(FOF_PList[i].MinID != target_minid) continue; /* wrong group */
-
-      if(SphP[i].Density > local_max_density)
+      MyIDType target_minid = Group[grp_index].MinID;
+      for(int i = 0; i < NumPart; i++)
         {
-          local_max_density = SphP[i].Density;
-          local_best_index  = i;
+          if(P[i].Type != 0) continue;
+          if(P[i].Mass == 0 && P[i].ID == 0) continue;
+          if(FOF_PList[i].MinID != target_minid) continue;
+          if(SphP[i].Density > local_max_density)
+            {
+              local_max_density = SphP[i].Density;
+              local_best_index  = i;
+            }
         }
     }
 
-  /* --- Phase 2: MPI reduce to find globally densest cell --- */
-  /* Pack density + task into a struct so MPI_MAXLOC finds the winner */
   struct { double density; int task; } local_val, global_val;
   local_val.density = (local_best_index >= 0) ? local_max_density : -1.0;
   local_val.task    = ThisTask;
 
   MPI_Allreduce(&local_val, &global_val, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
-  if(global_val.density < 0)
+  /* Rest of spawning logic unchanged - only winning task acts */
+  if(grp_index < 0 || global_val.density < 0 || ThisTask != global_val.task)
     {
       mpi_printf("FOF_SEEDING: WARNING - no gas cell found for group MinID=%llu, skipping seed.\n",
                  (unsigned long long)target_minid);
@@ -156,7 +155,7 @@ void seed_black_hole_in_group(int grp_index)
              (unsigned long long)P[ibh].ID,
              (unsigned long long)target_minid,
              All.BlackHoleSeedMass, ThisTask);
-}
-#endif /* BLACKHOLE_SEEDING */
 
-// #endif
+
+  (*n_seeded)++;
+}
