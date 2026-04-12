@@ -27,12 +27,13 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
   /* grp_index == -1 means this task has no group to seed but must
    * still participate in the MPI_Allreduce collective */
   
+  MyIDType target_minid = (grp_index >= 0) ? Group[grp_index].MinID : 0;
+
   double local_max_density = -1.0;
   int    local_best_index  = -1;
 
   if(grp_index >= 0)
     {
-      MyIDType target_minid = Group[grp_index].MinID;
       for(int i = 0; i < NumPart; i++)
         {
           if(P[i].Type != 0) continue;
@@ -159,3 +160,4 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
 
   (*n_seeded)++;
 }
+#endif
