@@ -1212,6 +1212,23 @@ static void contents_restart_file(int modus)
 
   byten(DC, MaxNvc * sizeof(connection), modus);
 
+  /* Reset DC to empty on read. DC encodes Voronoi connectivity tied to a
+   * specific particle ordering. After restart, domain_Decomposition() in
+   * run.c reshuffles particles before fof_seeding() can be called, leaving
+   * DC stale. Starting from Nvc=0 is always safe: domain_Decomposition()
+   * skips DC update when Largest_Nvc==0, and the mesh rebuild in create_mesh()
+   * repopulates SphP[i].first_connection fresh each step anyway. */
+  if(modus == MODUS_READ)
+    {
+      Nvc                   = 0;
+      FirstUnusedConnection = 0;
+      for(int q = 0; q < MaxNvc; q++)
+        {
+          DC[q].task = -1;
+          DC[q].next = (q < MaxNvc - 1) ? q + 1 : -1;
+        }
+    }
+
   polling(modus);
 
   /* write state of random number generators */
