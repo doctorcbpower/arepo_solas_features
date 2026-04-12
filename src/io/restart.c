@@ -1291,7 +1291,7 @@ static void contents_restart_file(int modus)
   if(modus == MODUS_READ)
     {
       All.MaxSeededHalos = All.NSeededHalos;
-      SeededHaloIDs = mymalloc("SeededHaloIDs",
+      SeededHaloIDs = mymalloc_movable(&SeededHaloIDs,"SeededHaloIDs",
                                imax(1, All.NSeededHalos) * sizeof(MyIDType));
     }
 

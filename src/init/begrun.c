@@ -277,6 +277,15 @@ void begrun2(void)
 
 #if defined(HALO_SEEDING) && defined(FOF)
   All.NextTimeOfHaloFinding=All.TimeOfFirstHaloFinding;
+#ifdef BLACKHOLE_SEEDING
+  if(RestartFlag != 1) 
+    {
+      All.NSeededHalos   = 0;
+      All.MaxSeededHalos = 0;
+      SeededHaloIDs = mymalloc_movable(&SeededHaloIDs, "SeededHaloIDs",
+                                       sizeof(MyIDType));
+    }
+#endif
 #endif
 
 #if defined(FORCETEST) && defined(FORCETEST_TESTFORCELAW)

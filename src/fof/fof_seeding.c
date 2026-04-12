@@ -49,9 +49,9 @@
 #if defined(HALO_SEEDING) && defined(FOF)
 
 #ifdef BLACKHOLE_SEEDING
-  #ifndef BLACKHOLES
-    #define BLACKHOLES // Temporary safeguard for the header
-  #endif
+//  #ifndef BLACKHOLES
+//    #define BLACKHOLES // Temporary safeguard for the header
+//  #endif
   #include "../blackholes/bh_proto.h"
 #endif
 
@@ -73,7 +73,7 @@ void mark_halo_seeded(MyIDType minid)
     // Grow array if needed
     if(All.NSeededHalos == All.MaxSeededHalos) {
         All.MaxSeededHalos = 2 * All.MaxSeededHalos + 64;
-        SeededHaloIDs = myrealloc(SeededHaloIDs, All.MaxSeededHalos * sizeof(MyIDType));
+        SeededHaloIDs = myrealloc_movable(SeededHaloIDs, All.MaxSeededHalos * sizeof(MyIDType));
     }
     // Insert in sorted position
     int pos = All.NSeededHalos;
@@ -151,15 +151,9 @@ void fof_seeding(void)
   Next = (int *)mymalloc("Next", NumPart * sizeof(int));
   Tail = (int *)mymalloc("Tail", NumPart * sizeof(int));
 
-#ifdef HIERARCHICAL_GRAVITY
-  timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestOccupiedTimeBin);
-#endif /* #ifdef HIERARCHICAL_GRAVITY */
+  timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestActiveTimeBin);
 
   construct_forcetree(0, 0, 1, All.HighestOccupiedTimeBin); /* build tree for all particles */
-//**
-//#if defined(SUBFIND)
-//  subfind_density_hsml_guess();
-//#endif /* #if defined(SUBFIND) */
 
   /* initialize link-lists */
   for(i = 0; i < NumPart; i++)
@@ -175,24 +169,6 @@ void fof_seeding(void)
   cputime = fof_find_groups(MinID, Head, Len, Next, Tail, MinIDTask);
   mpi_printf("FOF_SEEDING: group finding took = %g sec\n", cputime);
 
-//#ifdef FOF_SECONDARY_LINK_TARGET_TYPES
-//  myfree(Father);
-//  myfree(Nextnode);
-//  myfree(Tree_Points);
-//
-//  /* now rebuild the tree with all the types selected as secondary link targets */
-//  construct_forcetree(0, 0, 2, All.HighestOccupiedTimeBin);
-//#endif /* #ifdef FOF_SECONDARY_LINK_TARGET_TYPES */
-
-//#ifdef HIERARCHICAL_GRAVITY
-//  timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestActiveTimeBin);
-//#endif /* #ifdef HIERARCHICAL_GRAVITY */
-//
-//  /* call routine to attach secondary particles/cells to primary groups */
-//  cputime = fof_find_nearest_dmparticle(MinID, Head, Len, Next, Tail, MinIDTask);
-//
-//  mpi_printf("FOF_SEEDING: attaching gas and star particles to nearest dm particles took = %g sec\n", cputime);
-
   myfree(Father);
   myfree(Nextnode);
   myfree(Tree_Points);
@@ -202,9 +178,6 @@ void fof_seeding(void)
   myfree(Tail);
   myfree(Next);
   myfree(Len);
-//  myfree(Head);
-//  myfree(MinIDTask);
-//  myfree(MinID);
 
   t0 = second();
 
@@ -297,17 +270,35 @@ void fof_seeding(void)
   for(int n=0; n<Ngroups;n++)
       fprintf(stderr,"Group mass[%d]: %d (ThisTask:%d) \n",n,Group[n].Len,ThisTask);
 
-    for(int n = 0; n < Ngroups; n++)
-    {
-      if(Group[n].Mass < All.MinHaloMassForBlackHoleSeeding)
-        continue;
-      if(is_halo_seeded(Group[n].MinID))
-        continue;
-      seed_black_hole_in_group(n);
-      mark_halo_seeded(Group[n].MinID);
+  int local_bhs_seeded = 0;
 
+  for(int n = 0; n < Ngroups; n++)
+  {
+    if(Group[n].Mass < All.MinHaloMassForBlackHoleSeeding)
+      continue;
+    if(is_halo_seeded(Group[n].MinID))
+      continue;
+    seed_black_hole_in_group(n);
+    mark_halo_seeded(Group[n].MinID);
   }
+
+  /* Synchronise global counts across all tasks */
+  int total_bhs_seeded = 0;
+  MPI_Allreduce(&local_bhs_seeded, &total_bhs_seeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  if(total_bhs_seeded > 0)
+    {
+      All.TotNumPart += total_bhs_seeded;
+#ifdef BLACKHOLES
+      All.TotNumBhs  += total_bhs_seeded;
+#endif
+      /* Synchronise MaxID — winning tasks incremented it, others didn't */
+      MyIDType maxid_local = All.MaxID;
+      MPI_Allreduce(&maxid_local, &All.MaxID, 1,
+                    MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+    }
 #endif  
+  fof_prepare_output_order();
+  fof_subfind_exchange(MPI_COMM_WORLD);
 
   myfree_movable(FOF_GList);
   myfree_movable(FOF_PList);
