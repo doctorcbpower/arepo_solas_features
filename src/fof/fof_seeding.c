@@ -110,13 +110,6 @@ void fof_seeding(void)
 
   mpi_printf("FOF_SEEDING: Begin to compute FoF group catalogue...  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 
-  /* Free Voronoi mesh and DC connectivity before internal domain decomp.
-   * DC indices are particle-order dependent and will be corrupted by the
-   * FOF-internal domain_Decomposition(). free_mesh() handles this safely
-   * whether or not the mesh was built this step. */
-  if(DC != NULL)
-    free_mesh();
-    
   ngb_treefree();
 
   domain_free();
@@ -317,6 +310,15 @@ void fof_seeding(void)
 
   myfree_movable(Group);   
   myfree(PS);              
+
+  /* Re-do domain decomposition to restore standard particle layout
+   * and rebuild DC connectivity consistently. run.c will rebuild
+   * the ngb tree and mesh after we return. */
+  domain_free();
+  domain_Decomposition();
+  ngb_treefree();
+  ngb_treeallocate();
+  ngb_treebuild(NumGas);
 
   TIMER_STOP(CPU_FOF);
 
