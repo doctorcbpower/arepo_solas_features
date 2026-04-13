@@ -291,6 +291,18 @@ void fof_seeding(void)
         mark_halo_seeded(Group[grp].MinID);
     }
 
+/* Synchronise NumPart counts before fof_subfind_exchange uses them */
+  int total_bhs_seeded = 0;
+  MPI_Allreduce(&local_bhs_seeded, &total_bhs_seeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  if(total_bhs_seeded > 0)
+    {
+      All.TotNumPart += total_bhs_seeded;
+#ifdef BLACKHOLES
+      All.TotNumBhs  += total_bhs_seeded;
+#endif
+      MyIDType maxid_local = All.MaxID;
+      MPI_Allreduce(&maxid_local, &All.MaxID, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+    }
 #endif  
   fof_prepare_output_order();
   fof_subfind_exchange(MPI_COMM_WORLD);

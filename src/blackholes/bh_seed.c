@@ -146,9 +146,9 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
 #endif /* BLACKHOLES */
 
   NumPart++;
-  All.TotNumPart++;
+  // All.TotNumPart++;
 #ifdef BLACKHOLES
-  All.TotNumBhs++;
+  // All.TotNumBhs++;
 #endif
 
   mpi_printf("FOF_SEEDING: Seeded BH (ID=%llu) in group MinID=%llu, "
