@@ -83,6 +83,8 @@ void mark_halo_seeded(MyIDType minid)
     }
     SeededHaloIDs[pos] = minid;
     All.NSeededHalos++;
+    fprintf(stderr, "Task %d: NSeededHalos=%d MaxSeededHalos=%d SeededHaloIDs=%p\n",
+          ThisTask, All.NSeededHalos, All.MaxSeededHalos, (void*)SeededHaloIDs);
 }
 
 static MyIDType *MinID;
@@ -143,8 +145,8 @@ void fof_seeding(void)
 
   mpi_printf("FOF_SEEDING: Comoving linking length: %g    (presently allocated=%g MB)\n", LinkL, AllocatedBytes / (1024.0 * 1024.0));
 
-  MinID     = (MyIDType *)mymalloc("MinID", NumPart * sizeof(MyIDType));
-  MinIDTask = (int *)mymalloc("MinIDTask", NumPart * sizeof(int));
+  MinID     = (MyIDType *)mymalloc_movable(&MinID,"MinID", NumPart * sizeof(MyIDType));
+  MinIDTask = (int *)mymalloc_movable(&MinIDTask,"MinIDTask", NumPart * sizeof(int));
 
   Head = (int *)mymalloc("Head", NumPart * sizeof(int));
   Len  = (int *)mymalloc("Len", NumPart * sizeof(int));
@@ -264,8 +266,12 @@ void fof_seeding(void)
 //  fof_assign_group_numbers();
 //
   mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
+  MPI_Barrier(MPI_COMM_WORLD);  // temporary diagnostic
+  mpi_printf("FOF_SEEDING: all tasks past barrier\n");
 //
 #ifdef BLACKHOLE_SEEDING
+  mpi_printf("FOF_SEEDING: entering seeding loop\n");
+
   /* Collect groups needing seeding on this task */
   int n_to_seed = 0;
   int seed_list[1024]; /* adjust size as needed */
@@ -277,9 +283,18 @@ void fof_seeding(void)
       seed_list[n_to_seed++] = n;
     }
 
+  fprintf(stderr, "Task %d: n_to_seed=%d Ngroups=%d\n", ThisTask, n_to_seed, Ngroups);
+  MPI_Barrier(MPI_COMM_WORLD);
+  mpi_printf("FOF_SEEDING: about to allreduce\n");
+
+  /* Give it a unique ID */
+  if(All.MaxID == 0)
+    calculate_maxid();
+
   /* Find global maximum number of groups to seed across all tasks */
   int max_to_seed;
   MPI_Allreduce(&n_to_seed, &max_to_seed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  fprintf(stderr, "FOF_SEEDING: max_to_seed=%d ThisTask=%d\n",max_to_seed, ThisTask);
 
   /* All tasks loop the same number of times - pad with -1 on tasks with fewer */
   int local_bhs_seeded = 0;
@@ -290,6 +305,7 @@ void fof_seeding(void)
       if(grp >= 0)
         mark_halo_seeded(Group[grp].MinID);
     }
+  mpi_printf("FOF_SEEDING: seeding loop done, local_bhs_seeded=%d\n", local_bhs_seeded);
 
 /* Synchronise NumPart counts before fof_subfind_exchange uses them */
   int total_bhs_seeded = 0;
@@ -300,35 +316,53 @@ void fof_seeding(void)
 #ifdef BLACKHOLES
       All.TotNumBhs  += total_bhs_seeded;
 #endif
-      MyIDType maxid_local = All.MaxID;
-      MPI_Allreduce(&maxid_local, &All.MaxID, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
+      // Force a full mesh rebuild flag
+//      All.NumForcesSinceLastDomainDecomp = All.TotNumPart + 1;
+
+      // Re-link the timebins so the new BH is in the tree
+      reconstruct_timebins();
     }
+
+  mpi_printf("FOF_SEEDING: seeding loop done, total_bhs_seeded=%d\n", total_bhs_seeded);
+
 #endif  
+
+  mpi_printf("FOF_SEEDING: calling fof_prepare_output_order\n");
   fof_prepare_output_order();
+  mpi_printf("FOF_SEEDING: calling fof_subfind_exchange\n");
   fof_subfind_exchange(MPI_COMM_WORLD);
+  mpi_printf("FOF_SEEDING: fof_subfind_exchange done\n");
 
   myfree_movable(FOF_GList);
   myfree_movable(FOF_PList);
-
-//#ifdef SUBFIND
-//  TIMER_STOP(CPU_FOF);
-//
-//  subfind(0);
-//
-//  TIMER_START(CPU_FOF);
-//#else  /* #ifdef SUBFIND */
-//**  Nsubgroups    = 0;
-//**  TotNsubgroups = 0;
-
   myfree_movable(Group);   
-  myfree(PS);              
+  myfree_movable(PS);              
 
   /* Re-do domain decomposition to restore standard particle layout
    * and rebuild DC connectivity consistently. run.c will rebuild
    * the ngb tree and mesh after we return. */
+/* Zero DC before domain decomp — fof_subfind_exchange reshuffled particles
+   * without updating DC, leaving connection chains corrupt. Setting Nvc=0
+   * causes domain_prepare_voronoi_dynamic_update() to set Largest_Nvc=0,
+   * which skips domain_mark_in_trans_table() and domain_exchange_and_update_DC()
+   * entirely. DC will be correctly repopulated by create_mesh() in run.c. */
+/*
+  Nvc = 0;
+  FirstUnusedConnection = 0;
+  for(int q = 0; q < MaxNvc; q++)
+    {
+      DC[q].task = -1;
+      DC[q].next = (q < MaxNvc - 1) ? q + 1 : -1;
+    }
+  if(MaxNvc > 0)
+    DC[MaxNvc - 1].next = -1;
+*/
+  free_mesh_structures_not_needed_for_derefinement_refinement();
+  free_all_remaining_mesh_structures();
+
+  ngb_treefree();
   domain_free();
   domain_Decomposition();
-  ngb_treefree();
   ngb_treeallocate();
   ngb_treebuild(NumGas);
 

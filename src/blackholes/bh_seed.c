@@ -54,12 +54,16 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
   MPI_Allreduce(&local_val, &global_val, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
   /* Rest of spawning logic unchanged - only winning task acts */
-  if(grp_index < 0 || global_val.density < 0 || ThisTask != global_val.task)
+ if(global_val.density < 0)
     {
-      mpi_printf("FOF_SEEDING: WARNING - no gas cell found for group MinID=%llu, skipping seed.\n",
+      mpi_printf("FOF_SEEDING: WARNING - no gas cell found for group MinID=%llu, skipping.\n",
                  (unsigned long long)target_minid);
-      return;
+      return;  /* all tasks return — no winner */
     }
+
+  /* Non-winning tasks and dummy tasks exit here — winning task continues */
+  if(grp_index < 0 || ThisTask != global_val.task)
+    return;
 
   /* --- Phase 3: winning task spawns the BH --- */
   if(ThisTask != global_val.task)
@@ -84,6 +88,9 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
 
   /* Copy base particle data from gas cell */
   P[ibh] = P[igas];
+  P[ibh].Pos[0] = P[igas].Pos[0];
+  P[ibh].Pos[1] = P[igas].Pos[1];
+  P[ibh].Pos[2] = P[igas].Pos[2];
   P[ibh].Type          = 5;
   P[ibh].SofteningType = All.SofteningTypeOfPartType[5];
   P[ibh].Mass          = All.BlackHoleSeedMass;
@@ -94,8 +101,8 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
 #endif
 
   /* Give it a unique ID */
-  if(All.MaxID == 0)
-    calculate_maxid();
+ //  if(All.MaxID == 0)
+ //   calculate_maxid();
   All.MaxID++;
   P[ibh].ID = All.MaxID;
 
@@ -146,9 +153,9 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
 #endif /* BLACKHOLES */
 
   NumPart++;
-  // All.TotNumPart++;
+  //All.TotNumPart++;
 #ifdef BLACKHOLES
-  // All.TotNumBhs++;
+  //All.TotNumBhs++;
 #endif
 
   mpi_printf("FOF_SEEDING: Seeded BH (ID=%llu) in group MinID=%llu, "
