@@ -21,7 +21,7 @@
  * \date        20/10/2025
  * \brief       Parallel friend of friends (FoF) group finder.
  * \details     contains functions:
- *                void fof_seeding(int num)
+ *                void fof_seeding(void)
  *
  * \par Major modifications and contributions:
  *
@@ -44,20 +44,18 @@
 #include "../domain/domain.h"
 #include "../main/allvars.h"
 #include "../main/proto.h"
-#include "../subfind/subfind.h"
+// #include "../subfind/subfind.h"
 
 #if defined(HALO_SEEDING) && defined(FOF)
 
 #ifdef BLACKHOLE_SEEDING
-//  #ifndef BLACKHOLES
-//    #define BLACKHOLES // Temporary safeguard for the header
-//  #endif
-  #include "../blackholes/bh_proto.h"
+#include "../blackholes/bh_proto.h"
 #endif
 
-  int is_halo_seeded(MyIDType minid)
+// Carries out a binary search to check if a halo with the given minid has already been seeded, and 
+// returns 1 if so, 0 otherwise
+int is_halo_seeded(MyIDType minid)
 {
-    // binary search
     int lo = 0, hi = All.NSeededHalos - 1;
     while(lo <= hi) {
         int mid = (lo + hi) / 2;
@@ -68,14 +66,14 @@
     return 0;
 }
 
+// Inserts the given minid into the list of seeded halos, keeping it sorted. Will realloc if needed.
+// Incremements All.NSeededHalos and updates SeededHaloIDs.
 void mark_halo_seeded(MyIDType minid)
 {
-    // Grow array if needed
     if(All.NSeededHalos == All.MaxSeededHalos) {
         All.MaxSeededHalos = 2 * All.MaxSeededHalos + 64;
         SeededHaloIDs = myrealloc_movable(SeededHaloIDs, All.MaxSeededHalos * sizeof(MyIDType));
     }
-    // Insert in sorted position
     int pos = All.NSeededHalos;
     while(pos > 0 && SeededHaloIDs[pos-1] > minid)  {
         SeededHaloIDs[pos] = SeededHaloIDs[pos-1];
@@ -83,23 +81,15 @@ void mark_halo_seeded(MyIDType minid)
     }
     SeededHaloIDs[pos] = minid;
     All.NSeededHalos++;
-    fprintf(stderr, "Task %d: NSeededHalos=%d MaxSeededHalos=%d SeededHaloIDs=%p\n",
-          ThisTask, All.NSeededHalos, All.MaxSeededHalos, (void*)SeededHaloIDs);
 }
 
-static MyIDType *MinID;
-static int *Head, *Len, *Next, *Tail, *MinIDTask;
+static MyIDType *MinID=NULL;
+static int *Head=NULL, *Len=NULL, *Next=NULL, *Tail=NULL, *MinIDTask=NULL;
 
 /*! \brief Main routine to execute the friend of friends group finder.
  *
- *  If called with num == -1 as argument, only FOF is carried out and no group
- *  catalogs are saved to disk. If num >= 0, the code will store the
- *  group/subgroup catalogs, and bring the particles into output order.
- *  In this case, the calling routine (which is normally savepositions()) will
- *  need to free PS[] and bring the particles back into the original order,
- *  as well as reestablished the mesh.
- *
- *  \param[in] num Index of output; if negative, no output written.
+ *  Does a FOF search to find halos and seed them provided they satisfy the 
+ *  seeding criteria.
  *
  *  \return void
  */
@@ -112,18 +102,9 @@ void fof_seeding(void)
 
   mpi_printf("FOF_SEEDING: Begin to compute FoF group catalogue...  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 
-  ngb_treefree();
-
-  domain_free();
-
-  domain_Decomposition();
-
-  ngb_treeallocate();
-  ngb_treebuild(NumGas);
-
   /* check */
   for(i = 0; i < NumPart; i++)
-    if((P[i].Mass == 0 && P[i].ID == 0) || (P[i].Type == 4 && P[i].Mass == 0) || (P[i].Type == 5 && P[i].Mass == 0))
+    if((P[i].Mass == 0 && P[i].ID == 0))
       terminate("this should not happen");
 
   /* this structure will hold auxiliary information for each particle, needed only during group finding */
@@ -141,19 +122,20 @@ void fof_seeding(void)
   fof_OldMaxPart    = All.MaxPart;
   fof_OldMaxPartSph = All.MaxPartSph;
 
-  LinkL = fof_get_comoving_linking_length(); // in fof.c
+  LinkL = fof_get_comoving_linking_length(); 
 
   mpi_printf("FOF_SEEDING: Comoving linking length: %g    (presently allocated=%g MB)\n", LinkL, AllocatedBytes / (1024.0 * 1024.0));
 
-  MinID     = (MyIDType *)mymalloc_movable(&MinID,"MinID", NumPart * sizeof(MyIDType));
-  MinIDTask = (int *)mymalloc_movable(&MinIDTask,"MinIDTask", NumPart * sizeof(int));
+  MinID     = (MyIDType *)mymalloc("MinID", NumPart * sizeof(MyIDType));
+  MinIDTask = (int *)mymalloc("MinIDTask", NumPart * sizeof(int));
 
   Head = (int *)mymalloc("Head", NumPart * sizeof(int));
   Len  = (int *)mymalloc("Len", NumPart * sizeof(int));
   Next = (int *)mymalloc("Next", NumPart * sizeof(int));
   Tail = (int *)mymalloc("Tail", NumPart * sizeof(int));
 
-  timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestActiveTimeBin);
+  // timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestActiveTimeBin);
+  timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestOccupiedTimeBin);
 
   construct_forcetree(0, 0, 1, All.HighestOccupiedTimeBin); /* build tree for all particles */
 
@@ -198,7 +180,7 @@ void fof_seeding(void)
     
   FOF_GList = (struct fof_group_list *)mymalloc_movable(&FOF_GList, "FOF_GList", sizeof(struct fof_group_list) * NumPart);
 
-  fof_compile_catalogue(); // in fof.c
+  fof_compile_catalogue(); 
 
   t1 = second();
   mpi_printf("FOF_SEEDING: compiling local group data and catalogue took = %g sec\n", timediff(t0, t1));
@@ -262,16 +244,12 @@ void fof_seeding(void)
 
   t1 = second();
   mpi_printf("FOF_SEEDING: computation of group properties took = %g sec\n", timediff(t0, t1));
-//
-//  fof_assign_group_numbers();
-//
-  mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
-  MPI_Barrier(MPI_COMM_WORLD);  // temporary diagnostic
-  mpi_printf("FOF_SEEDING: all tasks past barrier\n");
-//
-#ifdef BLACKHOLE_SEEDING
-  mpi_printf("FOF_SEEDING: entering seeding loop\n");
 
+  mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
+
+  int total_bhs_seeded = 0;
+
+#ifdef BLACKHOLE_SEEDING
   /* Collect groups needing seeding on this task */
   int n_to_seed = 0;
   int seed_list[1024]; /* adjust size as needed */
@@ -283,18 +261,9 @@ void fof_seeding(void)
       seed_list[n_to_seed++] = n;
     }
 
-  fprintf(stderr, "Task %d: n_to_seed=%d Ngroups=%d\n", ThisTask, n_to_seed, Ngroups);
-  MPI_Barrier(MPI_COMM_WORLD);
-  mpi_printf("FOF_SEEDING: about to allreduce\n");
-
-  /* Give it a unique ID */
-  if(All.MaxID == 0)
-    calculate_maxid();
-
   /* Find global maximum number of groups to seed across all tasks */
   int max_to_seed;
   MPI_Allreduce(&n_to_seed, &max_to_seed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  fprintf(stderr, "FOF_SEEDING: max_to_seed=%d ThisTask=%d\n",max_to_seed, ThisTask);
 
   /* All tasks loop the same number of times - pad with -1 on tasks with fewer */
   int local_bhs_seeded = 0;
@@ -305,79 +274,56 @@ void fof_seeding(void)
       if(grp >= 0)
         mark_halo_seeded(Group[grp].MinID);
     }
-  mpi_printf("FOF_SEEDING: seeding loop done, local_bhs_seeded=%d\n", local_bhs_seeded);
 
 /* Synchronise NumPart counts before fof_subfind_exchange uses them */
-  int total_bhs_seeded = 0;
+  // int total_bhs_seeded = 0;
   MPI_Allreduce(&local_bhs_seeded, &total_bhs_seeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   if(total_bhs_seeded > 0)
     {
       All.TotNumPart += total_bhs_seeded;
 #ifdef BLACKHOLES
       All.TotNumBhs  += total_bhs_seeded;
-#endif
-      // Force a full mesh rebuild flag
-//      All.NumForcesSinceLastDomainDecomp = All.TotNumPart + 1;
-
-      // Re-link the timebins so the new BH is in the tree
-      reconstruct_timebins();
+#endif // BLACKHOLES
+      MyIDType maxid_local = All.MaxID;
+      MPI_Allreduce(&maxid_local, &All.MaxID, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
     }
+#endif
+  // fof_prepare_output_order();
 
-  mpi_printf("FOF_SEEDING: seeding loop done, total_bhs_seeded=%d\n", total_bhs_seeded);
+  // fof_subfind_exchange(MPI_COMM_WORLD);
 
-#endif  
+  /* Verify NumGas consistency after exchange */
+  int local_numgas = NumGas;
+  int global_numgas;
+  MPI_Allreduce(&local_numgas, &global_numgas, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  mpi_printf("FOF_SEEDING: calling fof_prepare_output_order\n");
-  fof_prepare_output_order();
-  mpi_printf("FOF_SEEDING: calling fof_subfind_exchange\n");
-  fof_subfind_exchange(MPI_COMM_WORLD);
-  mpi_printf("FOF_SEEDING: fof_subfind_exchange done\n");
+  fprintf(stderr, "Task %d: post-exchange NumPart=%d NumGas=%d NumBhs=%d TotNumGas=%lld\n",
+          ThisTask, NumPart, NumGas, total_bhs_seeded, All.TotNumGas);
+  fflush(stderr);                 
 
   myfree_movable(FOF_GList);
   myfree_movable(FOF_PList);
+
   myfree_movable(Group);   
-  myfree_movable(PS);              
-
-  /* Re-do domain decomposition to restore standard particle layout
-   * and rebuild DC connectivity consistently. run.c will rebuild
-   * the ngb tree and mesh after we return. */
-/* Zero DC before domain decomp — fof_subfind_exchange reshuffled particles
-   * without updating DC, leaving connection chains corrupt. Setting Nvc=0
-   * causes domain_prepare_voronoi_dynamic_update() to set Largest_Nvc=0,
-   * which skips domain_mark_in_trans_table() and domain_exchange_and_update_DC()
-   * entirely. DC will be correctly repopulated by create_mesh() in run.c. */
-/*
-  Nvc = 0;
-  FirstUnusedConnection = 0;
-  for(int q = 0; q < MaxNvc; q++)
-    {
-      DC[q].task = -1;
-      DC[q].next = (q < MaxNvc - 1) ? q + 1 : -1;
-    }
-  if(MaxNvc > 0)
-    DC[MaxNvc - 1].next = -1;
-*/
-  free_mesh_structures_not_needed_for_derefinement_refinement();
-  free_all_remaining_mesh_structures();
-
-  ngb_treefree();
-  domain_free();
-  domain_Decomposition();
-  ngb_treeallocate();
-  ngb_treebuild(NumGas);
+  myfree(PS);              
 
   TIMER_STOP(CPU_FOF);
+  // mpi_printf("FOF_SEEDING: All FOF related work finished...\n");
+      fprintf(stderr,"FOF_SEEDING: All FOF related work finished... ThisTask: %d\n", ThisTask);
+      fflush(stderr);
 
-  mpi_printf("FOF_SEEDING: All FOF related work finished...\n");
+  MPI_Barrier(MPI_COMM_WORLD);
 }
-/*! \brief Calculate dynamical time at a given epoch.
- *
- *  \return Increment in expansion factor
- */
-double fof_seeding_get_time_increment(void)
-{
-    double hubble=hubble_function(All.Time);
-    return 2./hubble/sqrtf(200.);
-}
+// #ifdef IGNORE_CODE
+// /*! \brief Calculate dynamical time at a given epoch.
+//  *
+//  *  \return Increment in expansion factor
+//  */
+// double fof_seeding_get_time_increment(void)
+// {
+//     double hubble=hubble_function(All.Time);
+//     return 2./hubble/sqrtf(200.);
+// }
+// #endif /* IGNORE_CODE */
 
-#endif /* of FOF */
+#endif // #if defined(HALO_SEEDING) && defined(FOF)

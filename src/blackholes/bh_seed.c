@@ -69,8 +69,6 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
   if(ThisTask != global_val.task)
     return;  /* nothing to do on non-winning tasks */
 
-  int igas = local_best_index;
-
   /* Check we have room — same pattern as make_star() */
   if(NumPart >= All.MaxPart)
     terminate("FOF_SEEDING: no space to spawn BH (NumPart=%d MaxPart=%d)", NumPart, All.MaxPart);
@@ -84,83 +82,42 @@ void seed_black_hole_in_group(int grp_index, int *n_seeded)
     }
 #endif
 
-  int ibh = NumPart;   /* index of new BH in P[] */
+  int igas = local_best_index;
 
-  /* Copy base particle data from gas cell */
-  P[ibh] = P[igas];
-  P[ibh].Pos[0] = P[igas].Pos[0];
-  P[ibh].Pos[1] = P[igas].Pos[1];
-  P[ibh].Pos[2] = P[igas].Pos[2];
-  P[ibh].Type          = 5;
-  P[ibh].SofteningType = All.SofteningTypeOfPartType[5];
-  P[ibh].Mass          = All.BlackHoleSeedMass;
+/* store original mass */
+double gas_mass = P[igas].Mass;
 
-#ifdef INDIVIDUAL_GRAVITY_SOFTENING
-  if(((1 << P[ibh].Type) & (INDIVIDUAL_GRAVITY_SOFTENING)))
-    P[ibh].SofteningType = get_softening_type_from_mass(P[ibh].Mass);
-#endif
+/* convert gas → BH */
+P[igas].Type = 5;
+P[igas].SofteningType = All.SofteningTypeOfPartType[5];
 
-  /* Give it a unique ID */
- //  if(All.MaxID == 0)
- //   calculate_maxid();
-  All.MaxID++;
-  P[ibh].ID = All.MaxID;
+/* assign BH mass */
+double actual_seed_mass = All.BlackHoleSeedMass;
+if(actual_seed_mass >= gas_mass)
+  actual_seed_mass = 0.1 * gas_mass;
 
-  /* Register in gravity timebin — same as spawn_star_from_cell() */
-  timebin_add_particle(&TimeBinsGravity, ibh, igas, P[ibh].TimeBinGrav,
-                       TimeBinSynchronized[P[ibh].TimeBinGrav]);
+P[igas].Mass = actual_seed_mass;
 
-  /* Reduce gas cell mass conservatively */
-  double fac = (P[igas].Mass - All.BlackHoleSeedMass) / P[igas].Mass;
-  P[igas].Mass          *= fac;
-  SphP[igas].Energy     *= fac;
-  SphP[igas].Momentum[0] *= fac;
-  SphP[igas].Momentum[1] *= fac;
-  SphP[igas].Momentum[2] *= fac;
-#ifdef METALS
-  SphP[igas].Metals *= fac;
-#endif
-#ifdef MAXSCALARS
-  for(int s = 0; s < N_Scalar; s++)
-    *(MyFloat *)(((char *)(&SphP[igas])) + scalar_elements[s].offset_mass) *= fac;
-#endif
+/* DO NOT touch SphP extensively — just neutralize */
+SphP[igas].Density = 0;
+SphP[igas].Volume  = 0;
 
-#ifdef BLACKHOLES
-  /* Initialise BhP entry */
-  P[ibh].BhID             = NumBhs;
-  BhP[NumBhs].PID         = ibh;
-  BhP[NumBhs].Hsml        = cbrt((3.0 * SphP[igas].Volume) / (4.0 * M_PI));
-  BhP[NumBhs].Density      = SphP[igas].Density;
-  BhP[NumBhs].NgbMass      = 0.0;
-  BhP[NumBhs].NgbMassFeed  = 0.0;
-  BhP[NumBhs].DensityFlag  = 0;
-  BhP[NumBhs].TimeBinBh    = 0;
-#ifdef BONDI_ACCRETION
-  BhP[NumBhs].AccretionRate = 0.0;
-  BhP[NumBhs].MassToDrain   = 0.0;
-  for(int k = 0; k < 3; k++)
-    {
-      BhP[NumBhs].VelocityGas[k]         = 0.0;
-      BhP[NumBhs].VelocityGasCircular[k] = 0.0;
-      BhP[NumBhs].AngularMomentum[k]     = 0.0;
-    }
-  BhP[NumBhs].InternalEnergyGas = 0.0;
-#endif
-#ifdef INFALL_ACCRETION
-  BhP[NumBhs].Accretion = 0.0;
-#endif
-  NumBhs++;
-#endif /* BLACKHOLES */
+/* initialise BH structure */
+// P[igas].BhID = NumBhs;
+// BhP[NumBhs].PID = igas;
+// BhP[NumBhs].Hsml = cbrt((3.0 * SphP[igas].Volume) / (4.0 * M_PI));
+// BhP[NumBhs].Density = 0;
 
-  NumPart++;
-  //All.TotNumPart++;
-#ifdef BLACKHOLES
-  //All.TotNumBhs++;
-#endif
+// NumBhs++;
+/* Safety check — mass must not go to zero */
+  if(P[igas].Mass <= 0)
+    terminate("FOF_SEEDING: gas cell mass went to zero after BH seeding");
+  
+  mpi_printf("FOF_SEEDING: donor gas cell mass after seeding: %g\n", P[igas].Mass);
 
   mpi_printf("FOF_SEEDING: Seeded BH (ID=%llu) in group MinID=%llu, "
              "mass=%g at task %d\n",
-             (unsigned long long)P[ibh].ID,
+             (unsigned long long)P[igas].ID,
              (unsigned long long)target_minid,
              All.BlackHoleSeedMass, ThisTask);
 

@@ -173,17 +173,8 @@ void run(void)
 
           flush_everything();
 
-/*Create snapshots after feedback injections*/ 
-#if defined(STARS) || defined(BLACKHOLES)
-
-          if(All.Time >= All.FeedbackTime)
-            create_snapshot_if_desired();
-
-#endif
-
-#ifndef FEEDBACK_TESTING_RESTRICT_SNAPSHOTS
           create_snapshot_if_desired();
-#endif
+
           if(All.Ti_Current >= TIMEBASE) /* we reached the final time */
             {
               mpi_printf("\nFinal time=%g reached. Simulation ends.\n", All.TimeMax);
@@ -243,7 +234,7 @@ void run(void)
 
           output_log_messages(); /* write some info to log-files */
 
-#if !defined(VORONOI_STATIC_MESH)
+#if !defined(VORONOI_STATIC_MESH) 
 #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT
           free_all_remaining_mesh_structures();
 #else  /* #ifdef OPTIMIZE_MESH_MEMORY_FOR_REFINEMENT */
@@ -292,7 +283,14 @@ void run(void)
       special_particle_update_list();
 #endif /* #ifdef EXACT_GRAVITY_FOR_PARTICLE_TYPE */
 
-      calculate_non_standard_physics_prior_mesh_construction();
+#if defined(HALO_SEEDING) && defined(FOF)
+  if(All.HighestActiveTimeBin == All.HighestOccupiedTimeBin) /* allow only top-level synchronization points */
+        {
+      fof_seeding();
+      mpi_printf("FOF_SEEDING: Found %d FOF groups at %g...\n",TotNgroups,All.Time);
+        }
+#endif
+      // calculate_non_standard_physics_prior_mesh_construction();
 
 #if !defined(VORONOI_STATIC_MESH)
       create_mesh();
@@ -395,12 +393,14 @@ void calculate_non_standard_physics_with_valid_gravity_tree_always(void) {}
 void calculate_non_standard_physics_prior_mesh_construction(void)
 {
 #if defined(HALO_SEEDING) && defined(FOF)
-    if(All.Time>=All.NextTimeOfHaloFinding)
-    {
-        fof_seeding();
+    // if(All.Time>=All.NextTimeOfHaloFinding)
+    // {
+      // fof_fof(-1);
+      fof_seeding();
+    /* recreate the mesh that we had free to reduce peak memory usage */
         mpi_printf("FOF_SEEDING: Found %d FOF groups at %g...\n",TotNgroups,All.Time);
-        All.NextTimeOfHaloFinding*=All.TimeBetweenHaloFinding;
-    }
+        // All.NextTimeOfHaloFinding*=All.TimeBetweenHaloFinding;
+    // }
 #endif
     
 #if defined(COOLING) && defined(USE_SFR)

@@ -7,7 +7,7 @@
 #--------------------------------------- SOLAS additions
 #ENABLE_PROFILE_UTIL
 #_MPI
-
+#IGNORE_CODE
 #--------------------------------------- Feedback options
 #FEEDBACK_TESTING_RESTRICT_SNAPSHOTS  # Only dump snapshots after a feedback event
 #STARS
