@@ -21,7 +21,16 @@
  *  \return void
  */
 
-#ifdef BLACKHOLE_SEEDING
+// #ifdef BLACKHOLE_SEEDING
+
+static int bhs_spawned;             /*!< local number of black hole particles spawned in the time step */
+static int tot_bhs_spawned;         /*!< global number of black hole particles spawned in the time step */
+static int bhs_converted;           /*!< local number of gas cells converted into black holes in the time step */
+static int tot_bhs_converted;       /*!< global number of gas cells converted into black holes in the time step */
+static int altogether_spawned;      /*!< local number of particles spawned in the time step */
+static int tot_altogether_spawned;  /*!< global number of particles spawned in the time step */
+static double cum_mass_bhs = 0.0;   /*!< cumulative mass of black holes created in the time step (global value) */
+
 void seed_black_hole_in_group(int grp_index, int *n_seeded)
 {
   /* grp_index == -1 means this task has no group to seed but must
@@ -124,4 +133,4 @@ SphP[igas].Volume  = 0;
 
   (*n_seeded)++;
 }
-#endif
+// #endif /* #ifdef BLACKHOLE_SEEDING */

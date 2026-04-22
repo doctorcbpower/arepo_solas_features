@@ -283,14 +283,7 @@ void run(void)
       special_particle_update_list();
 #endif /* #ifdef EXACT_GRAVITY_FOR_PARTICLE_TYPE */
 
-#if defined(HALO_SEEDING) && defined(FOF)
-  if(All.HighestActiveTimeBin == All.HighestOccupiedTimeBin) /* allow only top-level synchronization points */
-        {
-      fof_seeding();
-      mpi_printf("FOF_SEEDING: Found %d FOF groups at %g...\n",TotNgroups,All.Time);
-        }
-#endif
-      // calculate_non_standard_physics_prior_mesh_construction();
+      calculate_non_standard_physics_prior_mesh_construction();
 
 #if !defined(VORONOI_STATIC_MESH)
       create_mesh();
@@ -392,15 +385,19 @@ void calculate_non_standard_physics_with_valid_gravity_tree_always(void) {}
  */
 void calculate_non_standard_physics_prior_mesh_construction(void)
 {
-#if defined(HALO_SEEDING) && defined(FOF)
-    // if(All.Time>=All.NextTimeOfHaloFinding)
-    // {
-      // fof_fof(-1);
-      fof_seeding();
-    /* recreate the mesh that we had free to reduce peak memory usage */
-        mpi_printf("FOF_SEEDING: Found %d FOF groups at %g...\n",TotNgroups,All.Time);
-        // All.NextTimeOfHaloFinding*=All.TimeBetweenHaloFinding;
-    // }
+#ifdef HALO_SEEDING
+#ifndef FOF
+#error "HALO_SEEDING requires FOF to be defined"
+#endif /* #ifndef FOF */
+#define MAX_HALO_SEED 10000
+  MyIDType halo_ids[MAX_HALO_SEED];
+  int num_halos_to_seed;
+  if(All.Time>=All.NextTimeOfHaloFinding)
+    {
+      num_halos_to_seed = fof_seeding_list(halo_ids, MAX_HALO_SEED);
+      mpi_printf("FOF_SEEDING: Found %d FOF seed candidates at %g...\n",num_halos_to_seed,All.Time);
+      All.NextTimeOfHaloFinding*=All.TimeBetweenHaloFinding;
+    }
 #endif
     
 #if defined(COOLING) && defined(USE_SFR)

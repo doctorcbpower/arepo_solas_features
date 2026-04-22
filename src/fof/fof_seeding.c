@@ -21,15 +21,13 @@
  * \date        20/10/2025
  * \brief       Parallel friend of friends (FoF) group finder.
  * \details     contains functions:
- *                void fof_seeding(void)
+ *                int fof_seeding_list(MyIDType *halo_ids, int max_ids)
  *
  * \par Major modifications and contributions:
  *
  * - DD.MM.YYYY Description
  * - 24.05.2018 Prepared file for public release -- Rainer Weinberger
  */
-
-#include "fof.h"
 
 #include <gsl/gsl_math.h>
 #include <inttypes.h>
@@ -44,44 +42,16 @@
 #include "../domain/domain.h"
 #include "../main/allvars.h"
 #include "../main/proto.h"
+#include "../blackholes/bh_proto.h"
 // #include "../subfind/subfind.h"
 
-#if defined(HALO_SEEDING) && defined(FOF)
+#ifdef HALO_SEEDING 
+#ifndef FOF // Ensure that FOF is enabled if HALO_SEEDING is enabled.
+#error "HALO_SEEDING requires FOF to be defined"
+#endif /* #ifndef FOF */
 
-#ifdef BLACKHOLE_SEEDING
-#include "../blackholes/bh_proto.h"
-#endif
-
-// Carries out a binary search to check if a halo with the given minid has already been seeded, and 
-// returns 1 if so, 0 otherwise
-int is_halo_seeded(MyIDType minid)
-{
-    int lo = 0, hi = All.NSeededHalos - 1;
-    while(lo <= hi) {
-        int mid = (lo + hi) / 2;
-        if(SeededHaloIDs[mid] == minid) return 1;
-        else if(SeededHaloIDs[mid] < minid) lo = mid + 1;
-        else hi = mid - 1;
-    }
-    return 0;
-}
-
-// Inserts the given minid into the list of seeded halos, keeping it sorted. Will realloc if needed.
-// Incremements All.NSeededHalos and updates SeededHaloIDs.
-void mark_halo_seeded(MyIDType minid)
-{
-    if(All.NSeededHalos == All.MaxSeededHalos) {
-        All.MaxSeededHalos = 2 * All.MaxSeededHalos + 64;
-        SeededHaloIDs = myrealloc_movable(SeededHaloIDs, All.MaxSeededHalos * sizeof(MyIDType));
-    }
-    int pos = All.NSeededHalos;
-    while(pos > 0 && SeededHaloIDs[pos-1] > minid)  {
-        SeededHaloIDs[pos] = SeededHaloIDs[pos-1];
-        pos--;
-    }
-    SeededHaloIDs[pos] = minid;
-    All.NSeededHalos++;
-}
+#include "fof.h"
+#include "fof_seeding.h"
 
 static MyIDType *MinID=NULL;
 static int *Head=NULL, *Len=NULL, *Next=NULL, *Tail=NULL, *MinIDTask=NULL;
@@ -91,9 +61,9 @@ static int *Head=NULL, *Len=NULL, *Next=NULL, *Tail=NULL, *MinIDTask=NULL;
  *  Does a FOF search to find halos and seed them provided they satisfy the 
  *  seeding criteria.
  *
- *  \return void
+ *  \return list of halos to be seeded
  */
-void fof_seeding(void)
+int fof_seeding_list(MyIDType *halo_ids, int max_ids)
 {
   int i, start, lenloc, largestgroup;
   double t0, t1, cputime;
@@ -247,83 +217,32 @@ void fof_seeding(void)
 
   mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 
-  int total_bhs_seeded = 0;
-
-#ifdef BLACKHOLE_SEEDING
   /* Collect groups needing seeding on this task */
   int n_to_seed = 0;
-  int seed_list[1024]; /* adjust size as needed */
   
   for(int n = 0; n < Ngroups; n++)
     {
-      if(Group[n].Mass < All.MinHaloMassForBlackHoleSeeding) continue;
-      if(is_halo_seeded(Group[n].MinID)) continue;
-      seed_list[n_to_seed++] = n;
+      if(Group[n].Mass < All.MinHaloMassForFOFSeeding) continue;
+      if(halo_is_seeded(&HaloSeeds, Group[n].MinID)) continue;
+      halo_mark_seeded(&HaloSeeds, Group[n].MinID);
+
+      if (n_to_seed >= max_ids) 
+        terminate("Too many halos to seed on this task! Increase max_ids or reduce the number of halos being seeded.");
+      
+      halo_ids[n_to_seed++] = Group[n].MinID;
     }
-
-  /* Find global maximum number of groups to seed across all tasks */
-  int max_to_seed;
-  MPI_Allreduce(&n_to_seed, &max_to_seed, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-  /* All tasks loop the same number of times - pad with -1 on tasks with fewer */
-  int local_bhs_seeded = 0;
-  for(int s = 0; s < max_to_seed; s++)
-    {
-      int grp = (s < n_to_seed) ? seed_list[s] : -1;
-      seed_black_hole_in_group(grp, &local_bhs_seeded);
-      if(grp >= 0)
-        mark_halo_seeded(Group[grp].MinID);
-    }
-
-/* Synchronise NumPart counts before fof_subfind_exchange uses them */
-  // int total_bhs_seeded = 0;
-  MPI_Allreduce(&local_bhs_seeded, &total_bhs_seeded, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-  if(total_bhs_seeded > 0)
-    {
-      All.TotNumPart += total_bhs_seeded;
-#ifdef BLACKHOLES
-      All.TotNumBhs  += total_bhs_seeded;
-#endif // BLACKHOLES
-      MyIDType maxid_local = All.MaxID;
-      MPI_Allreduce(&maxid_local, &All.MaxID, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, MPI_COMM_WORLD);
-    }
-#endif
-  // fof_prepare_output_order();
-
-  // fof_subfind_exchange(MPI_COMM_WORLD);
-
-  /* Verify NumGas consistency after exchange */
-  int local_numgas = NumGas;
-  int global_numgas;
-  MPI_Allreduce(&local_numgas, &global_numgas, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-  fprintf(stderr, "Task %d: post-exchange NumPart=%d NumGas=%d NumBhs=%d TotNumGas=%lld\n",
-          ThisTask, NumPart, NumGas, total_bhs_seeded, All.TotNumGas);
-  fflush(stderr);                 
 
   myfree_movable(FOF_GList);
   myfree_movable(FOF_PList);
 
   myfree_movable(Group);   
-  myfree(PS);              
+  myfree_movable(PS);              
 
   TIMER_STOP(CPU_FOF);
-  // mpi_printf("FOF_SEEDING: All FOF related work finished...\n");
-      fprintf(stderr,"FOF_SEEDING: All FOF related work finished... ThisTask: %d\n", ThisTask);
-      fflush(stderr);
+  mpi_printf("FOF_SEEDING: All FOF related work finished...\n");
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  return n_to_seed; // Return the number of halos to seed on this task
+
 }
-// #ifdef IGNORE_CODE
-// /*! \brief Calculate dynamical time at a given epoch.
-//  *
-//  *  \return Increment in expansion factor
-//  */
-// double fof_seeding_get_time_increment(void)
-// {
-//     double hubble=hubble_function(All.Time);
-//     return 2./hubble/sqrtf(200.);
-// }
-// #endif /* IGNORE_CODE */
 
-#endif // #if defined(HALO_SEEDING) && defined(FOF)
+#endif // #ifdef(HALO_SEEDING)

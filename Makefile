@@ -36,7 +36,7 @@ MATH_LIB   = -lm -lstdc++
 HWLOC_LIB  = -lhwloc
 
 #Mac OS using MacPorts modules for openmpi, fftw, gsl, hdf5 and hwloc
-ifeq ($(SYSTYPE),"Darwin")
+ifeq ($(filter Darwin,$(SYSTYPE)),Darwin)
 # compiler and its optimization options
 CC        =  mpicc   # sets the C-compiler
 OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
@@ -56,7 +56,7 @@ endif
 # end of Darwin
 
 #Mac OS using MacPorts modules for openmpi, fftw, gsl, hdf5 and hwloc
-ifeq ($(SYSTYPE),"MACOSX")
+ifeq ($(filter MACOSX,$(SYSTYPE)),MACOSX)
 BREW := /opt/homebrew/bin/brew
 $(info BREW: $(BREW))
 
@@ -82,7 +82,7 @@ endif
 # end of Darwin
 
 #Linux
-ifeq ($(SYSTYPE),"LINUX")
+ifeq ($(filter LINUX,$(SYSTYPE)),"LINUX")
 # compiler and its optimization options
 CC        =  mpicc
 OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
@@ -103,7 +103,7 @@ endif
 # end of Linux
 
 #Ngarrgu Tindebeek
-ifeq ($(SYSTYPE),"NT")
+ifeq ($(filter NT,$(SYSTYPE)),"NT")
 # compiler and its optimization options
 CC        =  mpicc
 OPTIMIZE  =  -std=c11 -ggdb -O3 -Wall -Wno-format-security -Wno-unknown-pragmas -Wno-unused-function
@@ -299,7 +299,9 @@ OBJS    += fof/fof.o \
 INCL    += fof/fof.h
 SUBDIRS += fof
 ifeq (HALO_SEEDING,$(findstring HALO_SEEDING,$(CONFIGVARS)))
-OBJS    += fof/fof_seeding.o 
+OBJS    += fof/fof_seeding.o \
+		   fof/fof_seeding_registry.o
+INCL    += fof/fof_seeding.h
 endif
 endif
 

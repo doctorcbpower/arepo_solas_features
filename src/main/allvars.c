@@ -137,11 +137,6 @@ int NumBhs;
 int NumStars;
 #endif
 
-#if defined(HALO_SEEDING) && defined(FOF)
-extern MyIDType *SeededHaloIDs = NULL;
-extern int MaxSeededHalos;
-#endif
-
 gsl_rng *random_generator;     /*!< a random number generator  */
 gsl_rng *random_generator_aux; /*!< an auxialiary random number generator for use if one doesn't want to influence the main code's
                                   random numbers  */

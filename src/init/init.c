@@ -48,6 +48,8 @@
 #include "../domain/domain.h"
 #include "../mesh/voronoi/voronoi.h"
 
+#include "../fof/fof_seeding.h"
+
 #include "../../celib/src/config.h"
 
 /*! \brief Prepares the loaded initial conditions for the run.
@@ -59,7 +61,7 @@
  *  are determined.
  *
  *  \return status code: <0 if finished without errors and run can start,
- *          0 code ends after calling init()  > 0 an error occurred, terminate.
+ *          0 code ends after calling init()   0 an error occurred, terminate.
  */
 int init(void)
 {
@@ -401,13 +403,11 @@ int init(void)
   ngb_treeallocate();
   ngb_treebuild(NumGas);
 
-#if defined(HALO_SEEDING) && defined(FOF)
-    if (RestartFlag == 0) {
-  /* Fresh start: no halos seeded yet */
-    All.NSeededHalos   = 0;
-    All.MaxSeededHalos = 0;
-    SeededHaloIDs      = NULL;
-    }
+#ifdef HALO_SEEDING
+#ifndef FOF
+#error "HALO_SEEDING is only implemented for FOF."
+#endif /* #ifndef FOF */
+  fof_seeding_init(RestartFlag);
 #endif
  
   if(RestartFlag == 3)
