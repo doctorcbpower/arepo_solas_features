@@ -13,8 +13,6 @@ REGULARIZE_MESH_FACE_ANGLE              # Use maximum face angle as roundness cr
 #--------------------------------------- Refinement and derefinement
 REFINEMENT_SPLIT_CELLS 			 # Refinement
 REFINEMENT_MERGE_CELLS                   # Derefinement
-#REFINEMENT_VOLUME_LIMIT    		 # Limit the volume of cells and the maximum volume difference between neighboring cels
-#NODEREFINE_BACKGROUND_GRID 		 # Do not de-refine low-res gas cells in zoom simulations
 
 #--------------------------------------- Time integration options
 TREE_BASED_TIMESTEPS 			 # non-local timestep criterion (take 'signal speed' into account)
