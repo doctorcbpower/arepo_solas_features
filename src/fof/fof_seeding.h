@@ -50,8 +50,4 @@ void halo_seed_registry_io(HaloSeedRegistry *r, int modus);
 int  halo_is_seeded(HaloSeedRegistry *r, MyIDType id);
 void halo_mark_seeded(HaloSeedRegistry *r, MyIDType id);
 
-/* packing/unpacking for restart I/O */
-void halo_seed_registry_pack(HaloSeedRegistry *r, MyIDType **buf, int *n);
-void halo_seed_registry_unpack(HaloSeedRegistry *r, MyIDType *buf, int n);
-
 #endif

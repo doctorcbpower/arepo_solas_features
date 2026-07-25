@@ -27,7 +27,8 @@
  *                      void halo_seed_registry_grow(HaloSeedRegistry *r)  
  *                      int  halo_is_seeded(HaloSeedRegistry *r, MyIDType id)
  *                      void halo_mark_seeded(HaloSeedRegistry *r, MyIDType id)
- *          
+ *
+ *              (restart I/O for the registry lives in src/io/restart.c)
  */
 
 #include <gsl/gsl_math.h>
@@ -136,23 +137,3 @@ void halo_mark_seeded(HaloSeedRegistry *r, MyIDType id)
     r->n++;
 }
 
-void halo_seed_registry_pack(HaloSeedRegistry *r, MyIDType **buf, int *n)
-{
-    *buf = r->ids;
-    *n   = r->n;
-}
-
-void halo_seed_registry_unpack(HaloSeedRegistry *r, MyIDType *buf, int n)
-{
-     if(r->ids)
-        myfree_movable(r->ids);
-
-    r->n = n;
-    r->max = n;
-
-    r->ids = mymalloc_movable(&r->ids,
-                              "HaloSeedIDs",
-                              n * sizeof(MyIDType));
-
-    memcpy(r->ids, buf, n * sizeof(MyIDType));
-}

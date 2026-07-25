@@ -1606,29 +1606,27 @@ void deallocate_iobuf(int modus)
  */
 void fof_seeding_registry_io(HaloSeedRegistry *r, int modus)
 {
-    int n;
-    MyIDType *buf = NULL;
-
     if(modus == MODUS_WRITE)
     {
-        halo_seed_registry_pack(r, &buf, &n);
-
-        in(&n, modus);
-        byten(buf, n * sizeof(MyIDType), modus);
-        
-        myfree(buf);
+        /* write directly from the registry's own storage; nothing to free */
+        in(&r->n, modus);
+        byten(r->ids, r->n * sizeof(MyIDType), modus);
     }
     else
     {
+        int n;
+
         in(&n, modus);
 
-        buf = mymalloc("tmp", n * sizeof(MyIDType));
+        /* (re)allocate the registry's movable storage and read directly into it */
+        if(r->ids)
+            myfree_movable(r->ids);
 
-        byten(buf, n * sizeof(MyIDType), modus);
+        r->n   = n;
+        r->max = (n > 0) ? n : 128;
+        r->ids = (MyIDType *)mymalloc_movable(&r->ids, "HaloSeedIDs", r->max * sizeof(MyIDType));
 
-        halo_seed_registry_unpack(r, buf, n);
-
-        myfree(buf);
+        byten(r->ids, n * sizeof(MyIDType), modus);
     }
 }
 #endif /* #ifdef HALO_SEEDING */
