@@ -754,6 +754,13 @@ void fof_compute_group_properties(int gr, int start, int len)
       gr_MassType[k]       = 0;
     }
 
+#ifdef HALO_SEEDING
+  Group[gr].MaxGasDens      = -1;
+  Group[gr].MaxGasDensID    = 0;
+  Group[gr].MaxGasDensTask  = -1;
+  Group[gr].MaxGasDensIndex = -1;
+#endif /* #ifdef HALO_SEEDING */
+
   // calculate
   for(k = 0; k < len; k++)
     {
@@ -771,6 +778,17 @@ void fof_compute_group_properties(int gr, int start, int len)
       if(P[index].Type == 0)
         gr_Sfr += SphP[index].Sfr;
 #endif /* #ifdef USE_SFR */
+
+#ifdef HALO_SEEDING
+      /* track the densest gas cell of the group as potential seeding donor */
+      if(type == 0 && P[index].Mass > 0 && SphP[index].Density > Group[gr].MaxGasDens)
+        {
+          Group[gr].MaxGasDens      = SphP[index].Density;
+          Group[gr].MaxGasDensID    = P[index].ID;
+          Group[gr].MaxGasDensTask  = ThisTask;
+          Group[gr].MaxGasDensIndex = index;
+        }
+#endif /* #ifdef HALO_SEEDING */
 
       for(j = 0; j < 3; j++)
         {
@@ -875,6 +893,17 @@ void fof_exchange_group_data(void)
 #ifdef USE_SFR
       Group[start].Sfr += get_Group[i].Sfr;
 #endif /* #ifdef USE_SFR */
+
+#ifdef HALO_SEEDING
+      /* keep the globally densest gas cell across group fragments */
+      if(get_Group[i].MaxGasDens > Group[start].MaxGasDens)
+        {
+          Group[start].MaxGasDens      = get_Group[i].MaxGasDens;
+          Group[start].MaxGasDensID    = get_Group[i].MaxGasDensID;
+          Group[start].MaxGasDensTask  = get_Group[i].MaxGasDensTask;
+          Group[start].MaxGasDensIndex = get_Group[i].MaxGasDensIndex;
+        }
+#endif /* #ifdef HALO_SEEDING */
 
       for(j = 0; j < 3; j++)
         {

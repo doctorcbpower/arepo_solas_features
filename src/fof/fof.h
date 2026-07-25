@@ -68,6 +68,13 @@ extern struct group_properties
   MyFloat Sfr;
 #endif /* #ifdef USE_SFR */
 
+#ifdef HALO_SEEDING
+  MyFloat MaxGasDens;    /*!< density of the densest gas cell in the group (-1 if group has no gas) */
+  MyIDType MaxGasDensID; /*!< particle ID of the densest gas cell */
+  int MaxGasDensTask;    /*!< MPI task owning the densest gas cell */
+  int MaxGasDensIndex;   /*!< local particle index of the densest gas cell on its owning task */
+#endif /* #ifdef HALO_SEEDING */
+
 #ifdef SUBFIND
   int TargetTask; /* primary CPU responsible for this group */
   int Nsubs;
