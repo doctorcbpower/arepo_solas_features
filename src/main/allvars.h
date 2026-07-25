@@ -1514,6 +1514,11 @@ extern struct sph_particle_data
   MyFloat HighResDensity;
 #endif /* #if defined(REFINEMENT_HIGH_RES_GAS) */
 
+#ifdef HALO_SEEDING
+  MyFloat HostHaloMass; /*!< FOF mass of the host halo, refreshed at each on-the-fly FOF pass (0 if not in a halo);
+                             can be used e.g. to select the mode of star formation by halo mass */
+#endif /* #ifdef HALO_SEEDING */
+
 #ifdef REFINEMENT_AROUND_BH
   char RefBHFlag;
   MyFloat RefBHMaxRad;
@@ -1903,6 +1908,7 @@ enum iofields
   IO_NE,
   IO_NH,
   IO_SFR,
+  IO_HOSTHALOMASS,
 
   IO_POT,
   IO_ACCEL,

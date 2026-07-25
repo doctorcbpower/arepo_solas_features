@@ -311,6 +311,12 @@ int init(void)
 
   for(i = 0; i < NumGas; i++) /* initialize sph_properties */
     {
+#ifdef HALO_SEEDING
+      /* always reset: refreshed at the first on-the-fly FOF pass, and older
+         snapshots may not contain the HostHaloMass block */
+      SphP[i].HostHaloMass = 0;
+#endif /* #ifdef HALO_SEEDING */
+
       if(RestartFlag == 2 || RestartFlag == 3)
         for(j = 0; j < 3; j++)
           SphP[i].Center[j] = P[i].Pos[j];
