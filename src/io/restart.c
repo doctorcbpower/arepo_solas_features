@@ -1615,6 +1615,8 @@ void fof_seeding_registry_io(HaloSeedRegistry *r, int modus)
 
         in(&n, modus);
         byten(buf, n * sizeof(MyIDType), modus);
+        
+        myfree(buf);
     }
     else
     {
