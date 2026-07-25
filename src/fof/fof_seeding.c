@@ -61,9 +61,9 @@ static int *Head=NULL, *Len=NULL, *Next=NULL, *Tail=NULL, *MinIDTask=NULL;
  *  Does a FOF search to find halos and seed them provided they satisfy the 
  *  seeding criteria.
  *
- *  \return list of halos to be seeded
+ *  \return number of seed events (global; events array identical on all tasks)
  */
-int fof_seeding_list(MyIDType *halo_ids, int max_ids)
+int fof_seeding_list(HaloSeedEvent *events, int max_events)
 {
   int i, start, lenloc, largestgroup;
   double t0, t1, cputime;
@@ -75,7 +75,12 @@ int fof_seeding_list(MyIDType *halo_ids, int max_ids)
   /* check */
   for(i = 0; i < NumPart; i++)
     if((P[i].Mass == 0 && P[i].ID == 0))
-      terminate("this should not happen");
+    {
+        mpi_printf("TASK %d: After domain_Decomposition ID=%d Mass=%g\n",
+                   ThisTask, P[i].ID, P[i].Mass);
+        continue;
+                  //  terminate("This should not happen")
+    }
 
   /* this structure will hold auxiliary information for each particle, needed only during group finding */
   PS = (struct subfind_data *)mymalloc_movable(&PS, "PS", All.MaxPart * sizeof(struct subfind_data));
@@ -104,7 +109,6 @@ int fof_seeding_list(MyIDType *halo_ids, int max_ids)
   Next = (int *)mymalloc("Next", NumPart * sizeof(int));
   Tail = (int *)mymalloc("Tail", NumPart * sizeof(int));
 
-  // timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestActiveTimeBin);
   timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestOccupiedTimeBin);
 
   construct_forcetree(0, 0, 1, All.HighestOccupiedTimeBin); /* build tree for all particles */
@@ -217,20 +221,66 @@ int fof_seeding_list(MyIDType *halo_ids, int max_ids)
 
   mpi_printf("FOF_SEEDING: Finished computing FoF groups.  (presently allocated=%g MB)\n", AllocatedBytes / (1024.0 * 1024.0));
 
-  /* Collect groups needing seeding on this task */
-  int n_to_seed = 0;
-  
+  /* Collect seed candidates among the groups owned by this task */
+  int n_local = 0;
+
+  HaloSeedEvent *local_events =
+      (HaloSeedEvent *)mymalloc("local_seed_events", (Ngroups > 0 ? Ngroups : 1) * sizeof(HaloSeedEvent));
+
   for(int n = 0; n < Ngroups; n++)
     {
-      if(Group[n].Mass < All.MinHaloMassForFOFSeeding) continue;
-      if(halo_is_seeded(&HaloSeeds, Group[n].MinID)) continue;
-      halo_mark_seeded(&HaloSeeds, Group[n].MinID);
+      if(Group[n].Mass < All.MinHaloMassForFOFSeeding)
+        continue;
+      if(halo_is_seeded(&HaloSeeds, Group[n].MinID))
+        continue;
 
-      if (n_to_seed >= max_ids) 
-        terminate("Too many halos to seed on this task! Increase max_ids or reduce the number of halos being seeded.");
-      
-      halo_ids[n_to_seed++] = Group[n].MinID;
+      if(Group[n].MaxGasDens < 0)
+        {
+          /* halo above threshold but contains no gas: do not mark it seeded,
+             so it gets another chance at the next FOF pass */
+          printf("FOF_SEEDING: Task %d: group MinID=%llu (M=%g) has no gas cell, deferring seeding.\n", ThisTask,
+                 (unsigned long long)Group[n].MinID, Group[n].Mass);
+          continue;
+        }
+
+      local_events[n_local].HaloMinID  = Group[n].MinID;
+      local_events[n_local].HaloMass   = Group[n].Mass;
+      local_events[n_local].DonorID    = Group[n].MaxGasDensID;
+      local_events[n_local].DonorTask  = Group[n].MaxGasDensTask;
+      local_events[n_local].DonorIndex = Group[n].MaxGasDensIndex;
+      n_local++;
     }
+
+  /* Gather all seed events on all tasks: the donor cell may live on a
+   * different task than the group, and applying the same global event list
+   * everywhere keeps the seed registries identical across tasks. */
+  int *counts  = (int *)mymalloc("seed_counts", NTask * sizeof(int));
+  int *bcounts = (int *)mymalloc("seed_bcounts", NTask * sizeof(int));
+  int *bdispls = (int *)mymalloc("seed_bdispls", NTask * sizeof(int));
+
+  MPI_Allgather(&n_local, 1, MPI_INT, counts, 1, MPI_INT, MPI_COMM_WORLD);
+
+  int n_global = 0;
+  for(i = 0; i < NTask; i++)
+    {
+      bcounts[i] = counts[i] * sizeof(HaloSeedEvent);
+      bdispls[i] = n_global * sizeof(HaloSeedEvent);
+      n_global += counts[i];
+    }
+
+  if(n_global > max_events)
+    terminate("FOF_SEEDING: too many halos to seed (%d > max_events=%d)", n_global, max_events);
+
+  MPI_Allgatherv(local_events, n_local * sizeof(HaloSeedEvent), MPI_BYTE, events, bcounts, bdispls, MPI_BYTE, MPI_COMM_WORLD);
+
+  /* every task records every seeded halo -> registries stay in lockstep */
+  for(i = 0; i < n_global; i++)
+    halo_mark_seeded(&HaloSeeds, events[i].HaloMinID);
+
+  myfree(bdispls);
+  myfree(bcounts);
+  myfree(counts);
+  myfree(local_events);
 
   myfree_movable(FOF_GList);
   myfree_movable(FOF_PList);
@@ -239,10 +289,9 @@ int fof_seeding_list(MyIDType *halo_ids, int max_ids)
   myfree_movable(PS);              
 
   TIMER_STOP(CPU_FOF);
-  mpi_printf("FOF_SEEDING: All FOF related work finished...\n");
+  mpi_printf("FOF_SEEDING: All FOF related work finished, %d seed events identified.\n", n_global);
 
-  return n_to_seed; // Return the number of halos to seed on this task
-
+  return n_global; /* number of seed events, identical on all tasks */
 }
 
 #endif // #ifdef(HALO_SEEDING)

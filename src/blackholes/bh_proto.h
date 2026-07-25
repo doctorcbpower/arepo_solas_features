@@ -22,6 +22,4 @@ void bh_ngb_feedback(void);
 
 #endif /* #ifdef BLACKHOLES */
 
-// #ifdef BLACKHOLE_SEEDING
-void seed_black_hole_in_group(int, int *);
-// #endif /* #ifdef BLACKHOLE_SEEDING */
+/* black hole seeding from on-the-fly FOF: see src/fof/fof_seeding.h */

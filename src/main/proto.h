@@ -79,9 +79,7 @@ double get_jeans_mass(int i);
 #ifndef FOF
 #error "HALO_SEEDING requires FOF to be defined"
 #endif /* #ifndef FOF */
-int fof_seeding_list(MyIDType *, int);
-void mark_halo_seeded(MyIDType);
-int is_halo_seeded(MyIDType);
+/* seeding API lives in src/fof/fof_seeding.h */
 #endif
 
 void sfr_init();
