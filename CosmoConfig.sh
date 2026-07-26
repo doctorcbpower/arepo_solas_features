@@ -18,7 +18,7 @@ REFINEMENT_MERGE_CELLS                   # Derefinement
 TREE_BASED_TIMESTEPS 			 # non-local timestep criterion (take 'signal speed' into account)
 
 #------------------------------------------------ TreePM Options
-PMGRID=256                                       # Enables particle mesh; numberof cells used for grid in each dimension
+PMGRID=64                                       # Enables particle mesh; numberof cells used for grid in each dimension
 RCUT=5.0                                         # This can be used to override the maximum radius in which the short-range tree-force is evaluated (in case the TreePM algorithm is used). The default value is 4.5, given in mesh-cells.
 
 #--------------------------------------- Gravity treatment
@@ -55,8 +55,8 @@ FOF_SECONDARY_LINK_TYPES=1+16+32                 # 2^type for the types linked t
 #------------------------------------------------ Subfind
 SUBFIND                                          # enables substructure finder
 #SAVE_HSML_IN_SNAPSHOT                            # stores hsml, density, and velocity dispersion values in the snapshot files
-SUBFIND_CALC_MORE                                # calculates also the velocity dispersion in the local density estimate (this is automatically enabled by several other options, e.g. SAVE_HSML_IN_SNAPSHOT)
-SUBFIND_EXTENDED_PROPERTIES                      # adds calculation of further quantities related to angular momentum in different components
+#SUBFIND_CALC_MORE                                # calculates also the velocity dispersion in the local density estimate (this is automatically enabled by several other options, e.g. SAVE_HSML_IN_SNAPSHOT)
+#SUBFIND_EXTENDED_PROPERTIES                      # adds calculation of further quantities related to angular momentum in different components
 
 #--------------------------------------- Testing and Debugging options
 DEBUG # enables core-dumps
