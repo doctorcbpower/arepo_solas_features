@@ -83,4 +83,8 @@ DEBUG # enables core-dumps
 
 HALO_SEEDING
 BLACKHOLE_SEEDING
+BH_SEED_ON_MASS                 # seed once halo mass exceeds MinHaloMassForFOFSeeding (param.txt); the literature-standard channel
+#BH_SEED_ON_ZERO_METALLICITY     # seed pristine halos (max gas-cell metallicity <= ZeroMetallicityThresholdForFOFSeeding, param.txt);
+                                 # requires METALS above to be enabled. Channels OR together if more than one is active, and a halo
+                                 # already hosting a black hole (Type 5) is never reseeded regardless of channel.
 #OUTPUT_EVERY_STEP

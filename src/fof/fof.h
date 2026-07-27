@@ -73,6 +73,11 @@ extern struct group_properties
   MyIDType MaxGasDensID; /*!< particle ID of the densest gas cell */
   int MaxGasDensTask;    /*!< MPI task owning the densest gas cell */
   int MaxGasDensIndex;   /*!< local particle index of the densest gas cell on its owning task */
+#ifdef BH_SEED_ON_ZERO_METALLICITY
+  MyFloat MaxGasMetallicity; /*!< highest gas-cell metal mass fraction (Metals/Mass) in the group;
+                                  -1 if the group has no gas. A halo is "pristine" if this is below
+                                  All.ZeroMetallicityThresholdForFOFSeeding. */
+#endif /* #ifdef BH_SEED_ON_ZERO_METALLICITY */
 #endif /* #ifdef HALO_SEEDING */
 
 #ifdef SUBFIND

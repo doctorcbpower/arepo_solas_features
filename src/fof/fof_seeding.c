@@ -45,10 +45,21 @@
 #include "../blackholes/bh_proto.h"
 // #include "../subfind/subfind.h"
 
-#ifdef HALO_SEEDING 
+#ifdef HALO_SEEDING
 #ifndef FOF // Ensure that FOF is enabled if HALO_SEEDING is enabled.
 #error "HALO_SEEDING requires FOF to be defined"
 #endif /* #ifndef FOF */
+
+#ifdef BLACKHOLE_SEEDING
+#if !defined(BH_SEED_ON_MASS) && !defined(BH_SEED_ON_ZERO_METALLICITY)
+#error "BLACKHOLE_SEEDING requires at least one seeding channel: BH_SEED_ON_MASS and/or BH_SEED_ON_ZERO_METALLICITY"
+#endif
+#ifdef BH_SEED_ON_ZERO_METALLICITY
+#ifndef METALS
+#error "BH_SEED_ON_ZERO_METALLICITY requires METALS to be defined (per-cell metal mass is needed to judge a halo pristine)"
+#endif /* #ifndef METALS */
+#endif /* #ifdef BH_SEED_ON_ZERO_METALLICITY */
+#endif /* #ifdef BLACKHOLE_SEEDING */
 
 #include "fof.h"
 #include "fof_seeding.h"
@@ -408,15 +419,38 @@ int fof_seeding_list(HaloSeedEvent *events, int max_events)
 
   for(int n = 0; n < Ngroups; n++)
     {
-      if(Group[n].Mass < All.MinHaloMassForFOFSeeding)
-        continue;
       if(halo_is_seeded(&HaloSeeds, Group[n].MinID))
+        continue;
+
+      /* never seed a halo that already hosts a black hole, regardless of which
+       * channel below would otherwise trigger; Type 5 is a FOF_SECONDARY_LINK_TYPES
+       * member so existing BHs are already counted in LenType[5] */
+      if(Group[n].LenType[5] > 0)
+        continue;
+
+      int seed_this = 0;
+
+#ifdef BH_SEED_ON_MASS
+      if(Group[n].Mass >= All.MinHaloMassForFOFSeeding)
+        seed_this = 1;
+#endif /* #ifdef BH_SEED_ON_MASS */
+
+#ifdef BH_SEED_ON_ZERO_METALLICITY
+      /* whole-halo pristine check: even the most enriched gas cell must be
+       * below threshold (MaxGasMetallicity == -1 means no gas at all, handled
+       * by the MaxGasDens<0 deferral below) */
+      if(!seed_this && Group[n].MaxGasMetallicity >= 0 &&
+         Group[n].MaxGasMetallicity <= All.ZeroMetallicityThresholdForFOFSeeding)
+        seed_this = 1;
+#endif /* #ifdef BH_SEED_ON_ZERO_METALLICITY */
+
+      if(!seed_this)
         continue;
 
       if(Group[n].MaxGasDens < 0)
         {
-          /* halo above threshold but contains no gas: do not mark it seeded,
-             so it gets another chance at the next FOF pass */
+          /* halo satisfies a seeding channel but contains no gas: do not mark
+             it seeded, so it gets another chance at the next FOF pass */
           printf("FOF_SEEDING: Task %d: group MinID=%llu (M=%g) has no gas cell, deferring seeding.\n", ThisTask,
                  (unsigned long long)Group[n].MinID, Group[n].Mass);
           continue;

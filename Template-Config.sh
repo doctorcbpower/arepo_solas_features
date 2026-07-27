@@ -42,7 +42,12 @@
 #OUTPUT_TIMEBIN_STAR
 #OUTPUTTIMESTEP_BH
 
-#BLACKHOLE_SEEDING # Requires HALOS_SEEDING; seeds black holes in halos above a certain mass threshold
+#BLACKHOLE_SEEDING # Requires HALOS_SEEDING; seeds black holes in halos. Requires at least one of BH_SEED_ON_MASS /
+                   # BH_SEED_ON_ZERO_METALLICITY below (channels OR together if more than one is enabled); a halo already
+                   # hosting a black hole is never reseeded regardless of channel.
+#BH_SEED_ON_MASS # Requires BLACKHOLE_SEEDING; seed once halo mass exceeds MinHaloMassForFOFSeeding (param.txt)
+#BH_SEED_ON_ZERO_METALLICITY # Requires BLACKHOLE_SEEDING and METALS; seed pristine halos, i.e. every gas cell's metal mass
+                             # fraction <= ZeroMetallicityThresholdForFOFSeeding (param.txt)
 
 #--------------------------------------- Cooling parameters
 #USE_GRACKLE

@@ -1005,10 +1005,16 @@ extern struct global_data_all_processes
   double TimeOfFirstHaloFinding;
   double NextTimeOfHaloFinding;
   double TimeBetweenHaloFinding;
+#ifdef BH_SEED_ON_MASS
   double MinHaloMassForFOFSeeding;
+#endif /* #ifdef BH_SEED_ON_MASS */
+#ifdef BH_SEED_ON_ZERO_METALLICITY
+  double ZeroMetallicityThresholdForFOFSeeding; /*!< metal mass fraction below which a halo's most
+                                                      enriched gas cell still counts as "pristine" */
+#endif /* #ifdef BH_SEED_ON_ZERO_METALLICITY */
 #ifdef BLACKHOLE_SEEDING
   double BlackHoleSeedMass;
-#endif    
+#endif
 #endif
     
   double TotCountReducedFluxes;
