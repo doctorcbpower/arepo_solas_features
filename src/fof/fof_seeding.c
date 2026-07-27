@@ -282,6 +282,24 @@ int fof_seeding_list(HaloSeedEvent *events, int max_events)
   cputime = fof_find_groups(MinID, Head, Len, Next, Tail, MinIDTask);
   mpi_printf("FOF_SEEDING: group finding took = %g sec\n", cputime);
 
+#ifdef FOF_SECONDARY_LINK_TARGET_TYPES
+  myfree(Father);
+  myfree(Nextnode);
+  myfree(Tree_Points);
+
+  /* now rebuild the tree with all the types selected as secondary link targets */
+  construct_forcetree(0, 0, 2, All.HighestOccupiedTimeBin);
+#endif /* #ifdef FOF_SECONDARY_LINK_TARGET_TYPES */
+
+#ifdef HIERARCHICAL_GRAVITY
+  timebin_make_list_of_active_particles_up_to_timebin(&TimeBinsGravity, All.HighestActiveTimeBin);
+#endif /* #ifdef HIERARCHICAL_GRAVITY */
+
+  /* call routine to attach secondary particles/cells (gas, stars, BHs) to nearest primary (dm) groups;
+   * without this, gas cells are never linked into FOF_PList/FOF_GList and HostHaloMass stays 0 everywhere */
+  cputime = fof_find_nearest_dmparticle(MinID, Head, Len, Next, Tail, MinIDTask);
+  mpi_printf("FOF_SEEDING: attaching gas and star particles to nearest dm particles took = %g sec\n", cputime);
+
   myfree(Father);
   myfree(Nextnode);
   myfree(Tree_Points);
